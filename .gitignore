@@ -1,0 +1,17 @@
+# Node.js
+node_modules/
+npm-debug.log
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+
+# IDE files
+*.idea/
+*.vscode/
+*.swp
+*.swo
