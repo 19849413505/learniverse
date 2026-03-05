@@ -1,0 +1,1 @@
+{\n  "name": "learniverse",\n  "version": "1.0.0",\n  "description": "A monorepo project using workspaces.",\n  "private": true,\n  "workspaces": [\n    "packages/*"\n  ],\n  "scripts": {\n    "build": "npm run build --workspaces",\n    "test": "npm test --workspace"\n  }\n}
