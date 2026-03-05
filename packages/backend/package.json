@@ -23,7 +23,7 @@
   "devDependencies": {
     "typescript": "^4.5.2",
     "ts-node": "^10.0.0",
-    "nestjs-swagger": "^5.1.0"
+    "@nestjs/swagger": "^5.1.0"
   },
   "engines": {
     "node": "^14.0.0 || ^16.0.0"
