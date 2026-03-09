@@ -128,112 +128,43 @@ export default function KnowledgeBasePage() {
          return;
       }
 
-      // Standard Graph Mode
+      // Math Academy Course Builder Mode
       setProcessingStage('Analyzing document semantics...');
       setProgress(40);
-      setProcessingStage('Extracting concepts & building graph...');
+      setProcessingStage('Extracting atomic concepts & building skill tree...');
 
-      const response = await fetch(`${apiEndpoint}/knowledge/graph`, {
+      const response = await fetch(`${apiEndpoint}/course/generate-tree`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: fileText, customConfig }),
+        body: JSON.stringify({
+          text: fileText,
+          deckId: deckId,
+          customConfig
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate graph from AI');
+        throw new Error('Failed to generate Math Academy skill tree');
       }
 
-      const generatedGraph = await response.json();
-
       setProgress(80);
-      setProcessingStage('Generating dynamic flashcards...');
-
-      // We will generate cards for all nodes upfront for MVP simplicity,
-      // but keeping in mind the user wants dynamic generation "when learning a node",
-      // doing it here is a temporary compromise to fit the existing store structure.
-      // Ideally, the 'study' page fetches cards lazily.
+      setProcessingStage('Generating cognitive scaffolding & micro-lessons...');
 
       addDeck({
         id: deckId,
-        title: 'Document DeepSeek Map',
-        description: 'AI Generated Knowledge Graph',
+        title: 'Math Academy Skill Tree',
+        description: 'Structured course with prerequisites',
         createdAt: new Date().toISOString(),
-        cardCount: generatedGraph.nodes.length
+        cardCount: 0 // Will be populated dynamically as user unlocks nodes
       });
 
-      const newCards = [];
-      for (let i = 0; i < generatedGraph.nodes.length; i++) {
-        const node = generatedGraph.nodes[i];
-
-        // Dynamic card generation per node using the backend endpoint
-        setProcessingStage(`Generating dynamic flashcards for ${node.id || node.name}...`);
-
-        try {
-          const cardResponse = await fetch(`${apiEndpoint}/knowledge/cards`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nodeName: node.id || node.name,
-              nodeContext: fileText.substring(0, 1000),
-              customConfig
-            }), // sending a subset of text as context
-          });
-
-          if (cardResponse.ok) {
-            const cardData = await cardResponse.json();
-            const cards = cardData.cards || [];
-
-            for (const c of cards) {
-               // Assign to user in Cloud to get true tracking ID
-               try {
-                  const assignRes = await fetch(`${apiEndpoint}/cards/review/demo-user-id/${c.id}`, { method: 'POST' });
-                  if (assignRes.ok) {
-                     const reviewData = await assignRes.json();
-                     newCards.push({
-                        id: reviewData.id,
-                        front: c.front,
-                        back: c.back,
-                        deckId: deckId,
-                        fsrsCard: createEmptyCard(new Date()),
-                        lastReviewed: null
-                     });
-                  }
-               } catch (e) {
-                  console.error('Failed to sync graph card to user', e);
-               }
-            }
-          }
-        } catch (e) {
-          console.error("Failed to generate cards for node", node.id || node.name, e);
-          // Fallback simple card
-          newCards.push({
-            id: `card-${deckId}-${i}`,
-            front: `什么是【${node.id || node.name}】？`,
-            back: `基于你的文档生成的核心知识点概念。`,
-            deckId: deckId,
-            fsrsCard: createEmptyCard(new Date()),
-            lastReviewed: null
-          });
-        }
-      }
-
-      addCards(newCards);
-
-      // Update Graph UI
-      const formattedGraph = {
-         nodes: generatedGraph.nodes.map((n: any) => ({ ...n, name: n.id || n.name })),
-         links: generatedGraph.links
-      };
-
-      setGraphData(formattedGraph as any);
       setProgress(100);
       setProcessingStage('Complete!');
-      setShowGraph(true);
-      setIsProcessing(false);
 
+      // Instead of forcing the 2D graph, we redirect to a new skill tree page
       setTimeout(() => {
-        router.push('/study');
-      }, 3000);
+        router.push(`/course?deckId=${deckId}`);
+      }, 1500);
 
     } catch (error) {
       console.error(error);

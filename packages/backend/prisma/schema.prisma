@@ -24,6 +24,81 @@ model User {
   longestStreak Int @default(0)
 
   cardReviews CardReview[]
+  nodeProgress NodeProgress[]
+}
+
+// Knowledge Graph & Math Academy Course Structures
+
+model KnowledgeNode {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  deckId      String?  // Group nodes into courses/decks
+
+  // Relations
+  microLessons MicroLesson[]
+
+  // A node can have many prerequisites (edges where this node is the target)
+  prerequisites KnowledgeEdge[] @relation("TargetNode")
+
+  // A node can be a prerequisite for many other nodes (edges where this node is the source)
+  dependents    KnowledgeEdge[] @relation("SourceNode")
+
+  progress      NodeProgress[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KnowledgeEdge {
+  id          String   @id @default(uuid())
+  sourceId    String
+  targetId    String
+  type        String   // e.g., 'prerequisite', 'encompasses'
+
+  source      KnowledgeNode @relation("SourceNode", fields: [sourceId], references: [id], onDelete: Cascade)
+  target      KnowledgeNode @relation("TargetNode", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+}
+
+model MicroLesson {
+  id          String   @id @default(uuid())
+  nodeId      String
+
+  explanation String   // 最小有效讲解 (Micro-lesson)
+  example     String   // 示例引导 (Worked Example)
+  practice    String   // 即时练习 (Active Practice / Question)
+
+  node        KnowledgeNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+}
+
+// Track user progress on specific nodes (for skill tree unlocking)
+model NodeProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  nodeId      String
+  status      String   // 'locked', 'unlocked', 'completed'
+
+  // FSRS Core State Fields for entire Course Nodes (Math Academy FIRe model)
+  due         DateTime? // Next review time for this specific node
+  stability   Float?
+  difficulty  Float?
+  elapsedDays Int?
+  scheduledDays Int?
+  reps        Int?
+  lapses      Int?
+  fsrsState   Int?      // 0=New, 1=Learning, 2=Review, 3=Relearning
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  node        KnowledgeNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, nodeId])
 }
 
 // Flashcard Model (Nodes in the knowledge graph)

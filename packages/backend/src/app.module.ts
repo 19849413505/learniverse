@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AiModule } from './ai/ai.module';
 import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
+import { CourseModule } from './course/course.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { CardsModule } from './cards/cards.module';
     AiModule,
     UsersModule,
     CardsModule,
+    CourseModule,
   ],
   controllers: [],
   providers: [],

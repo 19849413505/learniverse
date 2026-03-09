@@ -4,6 +4,7 @@ import { OpenAI } from 'openai';
 import { ChatAgent } from './agents/chat.agent';
 import { LocateAgent } from './agents/locate.agent';
 import { QuestionAgent } from './agents/question.agent';
+import { CourseBuilderAgent, CourseGraphOutput } from './agents/course-builder.agent';
 
 @Injectable()
 export class AiService {
@@ -97,6 +98,11 @@ export class AiService {
   public getLocateAgent(customConfig?: { apiKey?: string; baseURL?: string }): LocateAgent {
      const creds = this.resolveCredentials(customConfig);
      return new LocateAgent(creds.apiKey, creds.baseURL);
+  }
+
+  public getCourseBuilderAgent(customConfig?: { apiKey?: string; baseURL?: string }): CourseBuilderAgent {
+     const creds = this.resolveCredentials(customConfig);
+     return new CourseBuilderAgent(creds.apiKey, creds.baseURL);
   }
 
   // Legacy Methods to support old API structure
