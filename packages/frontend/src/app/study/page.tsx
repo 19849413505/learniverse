@@ -9,10 +9,10 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
 import Confetti from 'react-confetti';
-import { useWindowSize } from 'react-use'; // will install if needed
+import SocraticTutor from '@/components/chat/SocraticTutor';
 
 export default function StudyPage() {
-  const { getDueCards, fsrs, updateCard } = useDeckStore();
+  const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore();
   const { addXP, incrementStreak } = useUserStore();
   const { apiKey, baseURL, model } = useSettingsStore();
 
@@ -20,20 +20,31 @@ export default function StudyPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [isFetchingCloud, setIsFetchingCloud] = useState(true);
 
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Socratic Chat states
-  const [isChatting, setIsChatting] = useState(false);
-  const [chatMessage, setChatMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<any[]>([{ role: 'assistant', content: "关于这个知识点，你有什么想和我讨论的？或者你觉得它最难理解的地方在哪里？" }]);
+  // Drawer state
+  const [isTutorOpen, setIsTutorOpen] = useState(false);
+
+  // Add a mounted check to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Load due cards on mount
-    const cards = getDueCards();
-    setDueCards(cards);
+    setMounted(true);
+
+    // Fetch cloud data first, then load local cards
+    fetchCloudDueCards().finally(() => {
+      const cards = getDueCards();
+      setDueCards(cards);
+      setIsFetchingCloud(false);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!mounted || isFetchingCloud) {
+    return null;
+  }
 
   if (dueCards.length === 0 && !isFinished) {
     return (
@@ -52,33 +63,6 @@ export default function StudyPage() {
 
   const handleFlip = () => {
     setIsFlipped(true);
-    setIsChatting(false);
-    setChatHistory([{ role: 'assistant', content: "关于这个知识点，你有什么想和我讨论的？或者你觉得它最难理解的地方在哪里？" }]);
-  };
-
-  const handleSendMessage = async () => {
-    if (!chatMessage.trim()) return;
-    const userMsg = chatMessage;
-    setChatMessage("");
-    setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
-
-    try {
-      const customConfig = apiKey ? { apiKey, baseURL, model } : undefined;
-      const response = await fetch('http://localhost:3001/api/archimedes/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMsg,
-          history: chatHistory.slice(1),
-          context: `当前卡片正面：${dueCards[currentIndex].front}，背面：${dueCards[currentIndex].back}`,
-          customConfig
-        })
-      });
-      const data = await response.json();
-      setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply }]);
-    } catch(e) {
-      setChatHistory(prev => [...prev, { role: 'assistant', content: 'Ops, backend is not responding.' }]);
-    }
   };
 
   const handleRate = (rating: Rating) => {
@@ -209,53 +193,35 @@ export default function StudyPage() {
               </h3>
             </div>
 
-            {/* Archimedes Dialogue Placeholder (only shown on back) */}
-            {isFlipped && !isChatting && (
-              <div className="mt-auto bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-4 items-start cursor-pointer hover:bg-indigo-100 transition" onClick={() => setIsChatting(true)}>
+            {/* Ask Tutor Action Area */}
+            {isFlipped && (
+              <div className="mt-auto bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-4 items-start cursor-pointer hover:bg-indigo-100 transition" onClick={() => setIsTutorOpen(true)}>
                 <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-indigo-900 text-sm">Promax: Socratic Mode</h4>
+                  <h4 className="font-bold text-indigo-900 text-sm">Socrates-7 导师舱</h4>
                   <p className="text-indigo-700 text-sm mt-1">
-                    关于【{currentCard?.front.replace('什么是【', '').replace('】？', '')}】，需要阿基米德老师的帮助吗？点击进入苏格拉底式启发对话。
+                    对于这部分内容不理解？点击呼唤导师进行苏格拉底式启发对话。
                   </p>
                   <button className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    Start Dialogue <ArrowLeft className="w-3 h-3 rotate-180" />
+                    呼叫导师 <ArrowLeft className="w-3 h-3 rotate-180" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Socratic Chat Window */}
-            {isFlipped && isChatting && (
-              <div className="mt-auto bg-white border border-indigo-200 rounded-2xl shadow-inner flex flex-col h-48 overflow-hidden">
-                <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                   {chatHistory.map((msg, i) => (
-                      <div key={i} className={`flex gap-2 text-sm ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        {msg.role !== 'user' && <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0"><Sparkles className="w-3 h-3 text-white" /></div>}
-                        <div className={`p-2 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-indigo-100 text-indigo-900' : 'bg-gray-100 text-gray-800'}`}>
-                          {msg.content}
-                        </div>
-                      </div>
-                   ))}
-                </div>
-                <div className="border-t border-gray-100 p-2 flex gap-2">
-                  <input
-                    type="text"
-                    value={chatMessage}
-                    onChange={e => setChatMessage(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Type your answer or question..."
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button onClick={handleSendMessage} className="bg-indigo-600 text-white px-3 py-2 rounded-xl text-sm font-bold">Send</button>
-                </div>
-              </div>
-            )}
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Socrates-7 Chat Drawer */}
+      <SocraticTutor
+        isOpen={isTutorOpen}
+        onClose={() => setIsTutorOpen(false)}
+        contextTitle={currentCard?.front || ''}
+        contextBody={currentCard?.back || ''}
+      />
 
       {/* Controls Area */}
       <div className="h-24 sm:h-32 flex items-center justify-center w-full pb-safe">

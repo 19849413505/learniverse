@@ -54,4 +54,23 @@ export class CardsController {
   async getDueCards(@Param('userId') userId: string) {
     return this.cardsService.getUserDueCards(userId);
   }
+
+  @Post('review-update/:reviewId')
+  async updateReviewState(
+     @Param('reviewId') reviewId: string,
+     @Body() updateData: any // Coming from ts-fsrs (snake_case)
+  ) {
+     // Map ts-fsrs snake_case properties to Prisma camelCase schema
+     const prismaData = {
+        due: updateData.due,
+        stability: updateData.stability,
+        difficulty: updateData.difficulty,
+        elapsedDays: updateData.elapsed_days,
+        scheduledDays: updateData.scheduled_days,
+        reps: updateData.reps,
+        lapses: updateData.lapses,
+        state: updateData.state,
+     };
+     return this.cardsService.updateReviewState(reviewId, prismaData);
+  }
 }

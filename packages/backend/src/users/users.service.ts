@@ -6,9 +6,10 @@ import { User } from '@prisma/client';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(email: string, name?: string): Promise<User> {
+  async createUser(email: string, name?: string, id?: string): Promise<User> {
     return this.prisma.user.create({
       data: {
+        id, // if provided, use it (e.g. 'demo-user-id'), otherwise prisma defaults to uuid()
         email,
         name,
       },

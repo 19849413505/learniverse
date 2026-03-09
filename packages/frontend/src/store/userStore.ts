@@ -27,7 +27,7 @@ export const useUserStore = create<UserState>()(
          set((state) => ({ xp: state.xp + amount }));
          // Background sync to backend
          try {
-            await fetch(`http://localhost:3001/users/demo-user-id/xp`, {
+            await fetch(`${API_BASE}/users/demo-user-id/xp`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ amount })

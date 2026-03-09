@@ -52,4 +52,11 @@ export class CardsService {
       },
     });
   }
+
+  async updateReviewState(id: string, updateData: Partial<CardReview>): Promise<CardReview> {
+     return this.prisma.cardReview.update({
+       where: { id },
+       data: updateData,
+     });
+  }
 }

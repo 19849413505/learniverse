@@ -2,11 +2,15 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ApiTags } from '@nestjs/swagger';
 import { PersonaConfig } from './agents/chat.agent';
+import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('Knowledge & AI')
-@Controller('api')
+@Controller()
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly prisma: PrismaService
+  ) {}
 
   @Post('knowledge/graph')
   async generateGraph(@Body() body: { text: string; customConfig?: any }) {
@@ -21,12 +25,28 @@ export class AiController {
     if (!body.nodeName) {
       return { error: 'nodeName is required' };
     }
-    const cards = await this.aiService.generateFlashcards(
+    const questions = await this.aiService.generateFlashcards(
       body.nodeName,
       body.nodeContext || '',
       body.customConfig,
     );
-    return { cards };
+
+    // Auto-save generated questions to database as Flashcards
+    const savedCards = [];
+    for (const q of questions) {
+      if (q.front && q.back) {
+        const card = await this.prisma.flashcard.create({
+          data: {
+            front: q.front,
+            back: q.back,
+            sourceNode: body.nodeName,
+          }
+        });
+        savedCards.push({ ...card, relevance: q.relevance });
+      }
+    }
+
+    return { cards: savedCards };
   }
 
   @Post('archimedes/chat')

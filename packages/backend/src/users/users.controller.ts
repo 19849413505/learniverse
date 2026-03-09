@@ -28,7 +28,7 @@ export class UsersController {
     try {
       await this.usersService.getUserById(id);
     } catch {
-      await this.usersService.createUser(`user-${id}@demo.com`, `Demo User`);
+      await this.usersService.createUser(`user-${id}@demo.com`, `Demo User`, id);
     }
     return this.usersService.updateXp(id, body.amount);
   }

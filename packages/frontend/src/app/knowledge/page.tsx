@@ -48,21 +48,92 @@ export default function KnowledgeBasePage() {
     };
   };
 
+  // Mimic Exam State
+  const [isMimicMode, setIsMimicMode] = useState(false);
+  const [referenceFormat, setReferenceFormat] = useState('');
+  const [topicName, setTopicName] = useState('');
+
+  const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
+
   const handleProcess = async () => {
     if (!fileText.trim()) return;
 
     setIsProcessing(true);
     setProgress(10);
-    setProcessingStage('Connecting to DeepSeek AI...');
 
     try {
-      // Connect to the new backend API
+      const customConfig = apiKey ? { apiKey, baseURL, model } : undefined;
+      const deckId = `deck-${Date.now()}`;
+
+      if (isMimicMode) {
+         setProcessingStage('Mimicking Exam & Generating Questions...');
+         if (!topicName) throw new Error("Topic name is required for mimic mode");
+
+         const response = await fetch(`${apiEndpoint}/cards/generate-mimic`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nodeName: topicName,
+              context: fileText,
+              referenceFormat,
+              count: 5,
+              customConfig
+            }),
+         });
+
+         if (!response.ok) throw new Error('Failed to generate mimic cards');
+         const data = await response.json();
+
+         addDeck({
+            id: deckId,
+            title: `Mimic Exam: ${topicName}`,
+            description: 'AI Generated Cloned Practice',
+            createdAt: new Date().toISOString(),
+            cardCount: data.cards.length
+         });
+
+         // Assign generated cards to user via API to establish Cloud ID
+         const assignedCards = [];
+         for (const c of data.cards) {
+            try {
+               const assignRes = await fetch(`${apiEndpoint}/cards/review/demo-user-id/${c.id}`, { method: 'POST' });
+               if (assignRes.ok) {
+                  const reviewData = await assignRes.json();
+                  assignedCards.push({
+                     id: reviewData.id, // Use the backend Review ID
+                     front: c.front,
+                     back: c.back,
+                     deckId: deckId,
+                     fsrsCard: createEmptyCard(new Date()),
+                     lastReviewed: null
+                  });
+               }
+            } catch (e) {
+               console.error('Failed to assign card to user', e);
+            }
+         }
+
+         addCards(assignedCards.length > 0 ? assignedCards : data.cards.map((c: any, i: number) => ({
+            id: `card-${deckId}-${i}`,
+            front: c.front,
+            back: c.back,
+            deckId: deckId,
+            fsrsCard: createEmptyCard(new Date()),
+            lastReviewed: null
+         })));
+
+         setProgress(100);
+         setProcessingStage('Complete! Cards added to your deck.');
+         setTimeout(() => router.push('/study'), 2000);
+         return;
+      }
+
+      // Standard Graph Mode
+      setProcessingStage('Analyzing document semantics...');
       setProgress(40);
       setProcessingStage('Extracting concepts & building graph...');
 
-      const customConfig = apiKey ? { apiKey, baseURL, model } : undefined;
-
-      const response = await fetch('http://localhost:3001/api/knowledge/graph', {
+      const response = await fetch(`${apiEndpoint}/knowledge/graph`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: fileText, customConfig }),
@@ -82,7 +153,6 @@ export default function KnowledgeBasePage() {
       // doing it here is a temporary compromise to fit the existing store structure.
       // Ideally, the 'study' page fetches cards lazily.
 
-      const deckId = `deck-${Date.now()}`;
       addDeck({
         id: deckId,
         title: 'Document DeepSeek Map',
@@ -99,7 +169,7 @@ export default function KnowledgeBasePage() {
         setProcessingStage(`Generating dynamic flashcards for ${node.id || node.name}...`);
 
         try {
-          const cardResponse = await fetch('http://localhost:3001/api/knowledge/cards', {
+          const cardResponse = await fetch(`${apiEndpoint}/knowledge/cards`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -113,16 +183,25 @@ export default function KnowledgeBasePage() {
             const cardData = await cardResponse.json();
             const cards = cardData.cards || [];
 
-            cards.forEach((c: any, cardIndex: number) => {
-               newCards.push({
-                  id: `card-${deckId}-${i}-${cardIndex}`,
-                  front: c.front,
-                  back: c.back,
-                  deckId: deckId,
-                  fsrsCard: createEmptyCard(new Date()),
-                  lastReviewed: null
-               });
-            });
+            for (const c of cards) {
+               // Assign to user in Cloud to get true tracking ID
+               try {
+                  const assignRes = await fetch(`${apiEndpoint}/cards/review/demo-user-id/${c.id}`, { method: 'POST' });
+                  if (assignRes.ok) {
+                     const reviewData = await assignRes.json();
+                     newCards.push({
+                        id: reviewData.id,
+                        front: c.front,
+                        back: c.back,
+                        deckId: deckId,
+                        fsrsCard: createEmptyCard(new Date()),
+                        lastReviewed: null
+                     });
+                  }
+               } catch (e) {
+                  console.error('Failed to sync graph card to user', e);
+               }
+            }
           }
         } catch (e) {
           console.error("Failed to generate cards for node", node.id || node.name, e);
@@ -178,15 +257,39 @@ export default function KnowledgeBasePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
 
         {/* Input Area */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[500px]">
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="text-indigo-600 w-5 h-5" />
-            <h2 className="font-bold text-gray-800">Source Material</h2>
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col h-[600px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="text-indigo-600 w-5 h-5" />
+              <h2 className="font-bold text-gray-800">Source Material</h2>
+            </div>
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+               <button onClick={() => setIsMimicMode(false)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${!isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Graph Mode</button>
+               <button onClick={() => setIsMimicMode(true)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Mimic Exam Mode</button>
+            </div>
           </div>
+
+          {isMimicMode && (
+             <div className="mb-3 space-y-3">
+               <input
+                 type="text"
+                 placeholder="Topic Name (e.g. Linear Algebra)"
+                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                 value={topicName}
+                 onChange={e => setTopicName(e.target.value)}
+               />
+               <textarea
+                 placeholder="Paste reference exam format/style here (Optional)..."
+                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm h-20 resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                 value={referenceFormat}
+                 onChange={e => setReferenceFormat(e.target.value)}
+               />
+             </div>
+          )}
 
           <textarea
             className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
-            placeholder="Paste your syllabus, article, or book chapter here..."
+            placeholder={isMimicMode ? "Paste the core knowledge material to test on..." : "Paste your syllabus, article, or book chapter here..."}
             value={fileText}
             onChange={(e) => setFileText(e.target.value)}
             disabled={isProcessing || showGraph}
@@ -218,7 +321,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Processing/Visualization Area */}
-        <div className="bg-gray-900 p-6 rounded-3xl shadow-xl flex flex-col h-[500px] relative overflow-hidden">
+        <div className="bg-gray-900 p-6 rounded-3xl shadow-xl flex flex-col h-[600px] relative overflow-hidden">
 
           <AnimatePresence>
             {!isProcessing && !showGraph && (
