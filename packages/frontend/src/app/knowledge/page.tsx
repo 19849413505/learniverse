@@ -46,68 +46,113 @@ export default function KnowledgeBasePage() {
     };
   };
 
-  const handleProcess = () => {
+  const handleProcess = async () => {
     if (!fileText.trim()) return;
 
     setIsProcessing(true);
-    setProgress(0);
-    setProcessingStage('Extracting text context...');
+    setProgress(10);
+    setProcessingStage('Connecting to DeepSeek AI...');
 
-    // Simulate multi-stage AI processing
-    const stages = [
-      { progress: 25, label: 'Chunking document...' },
-      { progress: 50, label: 'LLM extracting concepts & relationships...' },
-      { progress: 75, label: 'Building Knowledge Graph...' },
-      { progress: 100, label: 'Generating Spaced Repetition Cards...' }
-    ];
+    try {
+      // Connect to the new backend API
+      setProgress(40);
+      setProcessingStage('Extracting concepts & building graph...');
 
-    let currentStage = 0;
-    const interval = setInterval(() => {
-      if (currentStage < stages.length) {
-        setProgress(stages[currentStage].progress);
-        setProcessingStage(stages[currentStage].label);
+      const response = await fetch('http://localhost:3001/api/knowledge/graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: fileText }),
+      });
 
-        if (stages[currentStage].progress === 75) {
-          setGraphData(generateMockData() as any);
-          setShowGraph(true);
-        }
-
-        currentStage++;
-      } else {
-        clearInterval(interval);
-        setTimeout(finalizeProcessing, 1000);
+      if (!response.ok) {
+        throw new Error('Failed to generate graph from AI');
       }
-    }, 1500);
-  };
 
-  const finalizeProcessing = () => {
-    // 1. Create a new deck
-    const deckId = `deck-${Date.now()}`;
-    addDeck({
-      id: deckId,
-      title: 'Generated from Document',
-      description: 'Extracted via Knowledge Graph Pipeline',
-      createdAt: new Date().toISOString(),
-      cardCount: 0
-    });
+      const generatedGraph = await response.json();
 
-    // 2. Generate Flashcards from Graph Nodes
-    const newCards = generateMockData().nodes.map((node, index) => ({
-      id: `card-${deckId}-${index}`,
-      front: `What is ${node.name}?`,
-      back: `A core concept derived from the uploaded document, closely related to other nodes in group ${node.group}.`,
-      deckId: deckId,
-      fsrsCard: createEmptyCard(new Date()),
-      lastReviewed: null
-    }));
+      setProgress(80);
+      setProcessingStage('Generating dynamic flashcards...');
 
-    addCards(newCards);
-    setIsProcessing(false);
+      // We will generate cards for all nodes upfront for MVP simplicity,
+      // but keeping in mind the user wants dynamic generation "when learning a node",
+      // doing it here is a temporary compromise to fit the existing store structure.
+      // Ideally, the 'study' page fetches cards lazily.
 
-    // Redirect to Study after 2 seconds
-    setTimeout(() => {
-      router.push('/study');
-    }, 2000);
+      const deckId = `deck-${Date.now()}`;
+      addDeck({
+        id: deckId,
+        title: 'Document DeepSeek Map',
+        description: 'AI Generated Knowledge Graph',
+        createdAt: new Date().toISOString(),
+        cardCount: generatedGraph.nodes.length
+      });
+
+      const newCards = [];
+      for (let i = 0; i < generatedGraph.nodes.length; i++) {
+        const node = generatedGraph.nodes[i];
+
+        // Dynamic card generation per node using the backend endpoint
+        setProcessingStage(`Generating dynamic flashcards for ${node.id || node.name}...`);
+
+        try {
+          const cardResponse = await fetch('http://localhost:3001/api/knowledge/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nodeName: node.id || node.name, nodeContext: fileText.substring(0, 1000) }), // sending a subset of text as context
+          });
+
+          if (cardResponse.ok) {
+            const cardData = await cardResponse.json();
+            const cards = cardData.cards || [];
+
+            cards.forEach((c: any, cardIndex: number) => {
+               newCards.push({
+                  id: `card-${deckId}-${i}-${cardIndex}`,
+                  front: c.front,
+                  back: c.back,
+                  deckId: deckId,
+                  fsrsCard: createEmptyCard(new Date()),
+                  lastReviewed: null
+               });
+            });
+          }
+        } catch (e) {
+          console.error("Failed to generate cards for node", node.id || node.name, e);
+          // Fallback simple card
+          newCards.push({
+            id: `card-${deckId}-${i}`,
+            front: `什么是【${node.id || node.name}】？`,
+            back: `基于你的文档生成的核心知识点概念。`,
+            deckId: deckId,
+            fsrsCard: createEmptyCard(new Date()),
+            lastReviewed: null
+          });
+        }
+      }
+
+      addCards(newCards);
+
+      // Update Graph UI
+      const formattedGraph = {
+         nodes: generatedGraph.nodes.map((n: any) => ({ ...n, name: n.id || n.name })),
+         links: generatedGraph.links
+      };
+
+      setGraphData(formattedGraph as any);
+      setProgress(100);
+      setProcessingStage('Complete!');
+      setShowGraph(true);
+      setIsProcessing(false);
+
+      setTimeout(() => {
+        router.push('/study');
+      }, 3000);
+
+    } catch (error) {
+      console.error(error);
+      alert('Error connecting to backend API. Please ensure the backend is running on port 3001.');
+      setIsProcessing(false);
+    }
   };
 
   return (

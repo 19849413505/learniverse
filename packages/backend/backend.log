@@ -1,0 +1,7 @@
+
+> learniverse-backend@1.0.0 start
+> node dist/main.js
+
+Backend server listening at http://localhost:3001
+Using Mock DeepSeek API for Knowledge Graph generation.
+Using Mock DeepSeek API for Knowledge Graph generation.
