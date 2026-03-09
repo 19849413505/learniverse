@@ -2,7 +2,7 @@
 
 import { useSettingsStore } from '@/store/settingsStore';
 import { Settings, Server, Key, Bot } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
   const { provider, apiKey, baseURL, model, setSettings } = useSettingsStore();
@@ -12,6 +12,12 @@ export default function SettingsPage() {
   const [localModel, setLocalModel] = useState(model);
 
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setLocalApiKey(apiKey);
+    setLocalBaseUrl(baseURL);
+    setLocalModel(model);
+  }, [apiKey, baseURL, model]);
 
   const handleProviderChange = (e: any) => {
     const newProvider = e.target.value;

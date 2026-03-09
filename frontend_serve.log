@@ -1,0 +1,95 @@
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /settings.html
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 301 in 16 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /settings
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 6 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/media/e4af272ccee01ff0-s.p.woff2
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/css/13995ab2a06a3259.css
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 3 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 4 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/webpack-efeb744e65f84f6c.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/fd9d1056-46f255d08c358c9b.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/117-3ac777af40d2db0d.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/main-app-e86c235f1bf23a90.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/551-130e7a85ae691e7a.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/settings/page-06611b0948d22afa.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 7 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 7 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 6 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 6 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 9 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 11 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/596-2d197cdbd3d67502.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/648-2c01649c49b7aa73.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/layout-0cc4d1970991ce75.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 17 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 13 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 13 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /index.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /library.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /knowledge.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /league.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /profile.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 5 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 6 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 5 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 404 in 10 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 404 in 6 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/496-363f0b6c0ec6b6d5.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/355-4bf2a5ced15354f4.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/page-859b2a1f24179cfc.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 4 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 5 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/508-d103c20c4a90cdb1.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 11 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/knowledge/page-73983ca58d249b3d.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/league/page-c30680381d033395.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 13 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 16 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 200 in 14 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /settings
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/css/13995ab2a06a3259.css
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/media/e4af272ccee01ff0-s.p.woff2
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/webpack-efeb744e65f84f6c.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/fd9d1056-46f255d08c358c9b.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 0 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/117-3ac777af40d2db0d.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/main-app-e86c235f1bf23a90.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/551-130e7a85ae691e7a.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/settings/page-06611b0948d22afa.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/648-2c01649c49b7aa73.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/596-2d197cdbd3d67502.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/layout-0cc4d1970991ce75.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 0 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /index.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /library.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /knowledge.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 404 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /league.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /profile.txt?_rsc=po4um
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 404 in 1 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/496-363f0b6c0ec6b6d5.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/355-4bf2a5ced15354f4.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/page-859b2a1f24179cfc.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/508-d103c20c4a90cdb1.js
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/knowledge/page-73983ca58d249b3d.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 3 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 2 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 3 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 3 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 3 ms
+ HTTP  3/9/2026 2:54:55 AM ::1 GET /_next/static/chunks/app/league/page-c30680381d033395.js
+ HTTP  3/9/2026 2:54:55 AM ::1 Returned 304 in 1 ms
