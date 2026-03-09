@@ -31,4 +31,15 @@ export class UsersService {
   async getAllUsers(): Promise<User[]> {
     return this.prisma.user.findMany();
   }
+
+  async updateXp(id: string, amount: number): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        totalXp: {
+          increment: amount,
+        },
+      },
+    });
+  }
 }

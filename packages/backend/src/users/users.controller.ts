@@ -21,4 +21,15 @@ export class UsersController {
   async getAllUsers() {
     return this.usersService.getAllUsers();
   }
+
+  @Post(':id/xp')
+  async addXP(@Param('id') id: string, @Body() body: { amount: number }) {
+    // For MVP, if the user doesn't exist, create it (auto-provisioning)
+    try {
+      await this.usersService.getUserById(id);
+    } catch {
+      await this.usersService.createUser(`user-${id}@demo.com`, `Demo User`);
+    }
+    return this.usersService.updateXp(id, body.amount);
+  }
 }
