@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Brain, Check, Flame, AlertCircle, X, Sparkles, Trophy } from 'lucide-react';
 import { useDeckStore } from '@/store/deckStore';
 import { useUserStore } from '@/store/userStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
 import Confetti from 'react-confetti';
@@ -13,6 +14,7 @@ import { useWindowSize } from 'react-use'; // will install if needed
 export default function StudyPage() {
   const { getDueCards, fsrs, updateCard } = useDeckStore();
   const { addXP, incrementStreak } = useUserStore();
+  const { apiKey, baseURL, model } = useSettingsStore();
 
   const [dueCards, setDueCards] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -61,13 +63,15 @@ export default function StudyPage() {
     setChatHistory(prev => [...prev, { role: 'user', content: userMsg }]);
 
     try {
+      const customConfig = apiKey ? { apiKey, baseURL, model } : undefined;
       const response = await fetch('http://localhost:3001/api/archimedes/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
           history: chatHistory.slice(1),
-          context: `当前卡片正面：${dueCards[currentIndex].front}，背面：${dueCards[currentIndex].back}`
+          context: `当前卡片正面：${dueCards[currentIndex].front}，背面：${dueCards[currentIndex].back}`,
+          customConfig
         })
       });
       const data = await response.json();

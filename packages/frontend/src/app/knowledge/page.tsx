@@ -8,10 +8,12 @@ const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false 
 import { useDeckStore } from '@/store/deckStore';
 import { createEmptyCard } from 'ts-fsrs';
 import { useRouter } from 'next/navigation';
+import { useSettingsStore } from '@/store/settingsStore';
 
 export default function KnowledgeBasePage() {
   const router = useRouter();
   const { addDeck, addCards } = useDeckStore();
+  const { apiKey, baseURL, model } = useSettingsStore();
 
   const [fileText, setFileText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -58,10 +60,12 @@ export default function KnowledgeBasePage() {
       setProgress(40);
       setProcessingStage('Extracting concepts & building graph...');
 
+      const customConfig = apiKey ? { apiKey, baseURL, model } : undefined;
+
       const response = await fetch('http://localhost:3001/api/knowledge/graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: fileText }),
+        body: JSON.stringify({ text: fileText, customConfig }),
       });
 
       if (!response.ok) {
@@ -98,7 +102,11 @@ export default function KnowledgeBasePage() {
           const cardResponse = await fetch('http://localhost:3001/api/knowledge/cards', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nodeName: node.id || node.name, nodeContext: fileText.substring(0, 1000) }), // sending a subset of text as context
+            body: JSON.stringify({
+              nodeName: node.id || node.name,
+              nodeContext: fileText.substring(0, 1000),
+              customConfig
+            }), // sending a subset of text as context
           });
 
           if (cardResponse.ok) {

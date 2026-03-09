@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Map, Trophy, Network, User } from 'lucide-react';
+import { BookOpen, Map, Trophy, Network, User, Settings } from 'lucide-react';
 import clsx from 'clsx';
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { name: 'Knowledge', href: '/knowledge', icon: Network },
   { name: 'League', href: '/league', icon: Trophy },
   { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {

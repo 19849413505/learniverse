@@ -18,9 +18,19 @@ if (!USE_MOCK) {
     });
 }
 class AIService {
+    getClient(customConfig) {
+        if (customConfig && customConfig.apiKey) {
+            return new openai_1.OpenAI({
+                apiKey: customConfig.apiKey,
+                baseURL: customConfig.baseURL || 'https://api.deepseek.com/v1',
+            });
+        }
+        return openai;
+    }
     // 1. Generate Knowledge Graph from raw text
-    async generateKnowledgeGraph(text) {
-        if (USE_MOCK) {
+    async generateKnowledgeGraph(text, customConfig) {
+        const client = this.getClient(customConfig);
+        if (!client) {
             console.log('Using Mock DeepSeek API for Knowledge Graph generation.');
             await new Promise(r => setTimeout(r, 1500));
             return {
@@ -47,8 +57,8 @@ class AIService {
 文本:
 ${text.substring(0, 4000)} // Truncate for token limits
 `;
-        const response = await openai.chat.completions.create({
-            model: 'deepseek-chat',
+        const response = await client.chat.completions.create({
+            model: customConfig?.model || 'deepseek-chat',
             messages: [{ role: 'user', content: prompt }],
             response_format: { type: 'json_object' }
         });
@@ -62,8 +72,9 @@ ${text.substring(0, 4000)} // Truncate for token limits
         }
     }
     // 2. Dynamically Generate Flashcards for a SPECIFIC NODE
-    async generateFlashcards(nodeName, context) {
-        if (USE_MOCK) {
+    async generateFlashcards(nodeName, context, customConfig) {
+        const client = this.getClient(customConfig);
+        if (!client) {
             console.log(`Using Mock DeepSeek API for Flashcard generation for node: ${nodeName}`);
             await new Promise(r => setTimeout(r, 1000));
             return [
@@ -114,8 +125,8 @@ ${text.substring(0, 4000)} // Truncate for token limits
             "\n" +
             "上下文: " + context + "\n" +
             "概念: " + nodeName;
-        const response = await openai.chat.completions.create({
-            model: 'deepseek-chat',
+        const response = await client.chat.completions.create({
+            model: customConfig?.model || 'deepseek-chat',
             messages: [{ role: 'user', content: prompt }],
             response_format: { type: 'json_object' } // Using json_object might require wrapping in an object, but we'll try array or wrap it
         });
@@ -132,7 +143,7 @@ ${text.substring(0, 4000)} // Truncate for token limits
         }
     }
     // 3. Socratic Tutor (Archimedes Mode) - STRICT RULES APPLIED
-    async socraticTutor(userMessage, history, context) {
+    async socraticTutor(userMessage, history, context, customConfig) {
         const systemPrompt = "STRICT RULES\n" +
             "Be an approachable yet dynamic teacher, who helps the user learn by guiding them through their studies.\n" +
             "\n" +
@@ -154,7 +165,8 @@ ${text.substring(0, 4000)} // Truncate for token limits
             "\n" +
             "IMPORTANT\n" +
             "DO NOT GIVE ANSWERS OR DO HOMEWORK FOR THE USER. If the user asks a math or logic problem, DO NOT SOLVE IT in your first response. Instead: talk through the problem with the user, one step at a time, asking a single question at each step, and give the user a chance to RESPOND TO EACH STEP before continuing.";
-        if (USE_MOCK) {
+        const client = this.getClient(customConfig);
+        if (!client) {
             await new Promise(r => setTimeout(r, 1000));
             return "这是一个很好的问题！但在我直接告诉你答案之前，我们先来回顾一下：根据你刚才提到的概念，你认为这两者之间最大的区别可能是什么？（别担心，说错也没关系）";
         }
@@ -163,8 +175,8 @@ ${text.substring(0, 4000)} // Truncate for token limits
             ...history.map(h => ({ role: h.role, content: h.content })),
             { role: 'user', content: userMessage }
         ];
-        const response = await openai.chat.completions.create({
-            model: 'deepseek-chat',
+        const response = await client.chat.completions.create({
+            model: customConfig?.model || 'deepseek-chat',
             messages: messages,
         });
         return response.choices[0].message.content || "Sorry, I couldn't process that.";

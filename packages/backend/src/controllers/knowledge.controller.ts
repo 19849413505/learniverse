@@ -5,12 +5,12 @@ const aiService = new AIService();
 
 export const generateGraph = async (req: Request, res: Response) => {
   try {
-    const { text } = req.body;
+    const { text, customConfig } = req.body;
     if (!text) {
       return res.status(400).json({ error: 'Text content is required' });
     }
 
-    const graph = await aiService.generateKnowledgeGraph(text);
+    const graph = await aiService.generateKnowledgeGraph(text, customConfig);
     res.json(graph);
   } catch (error: any) {
     console.error('Error generating graph:', error);
@@ -20,12 +20,12 @@ export const generateGraph = async (req: Request, res: Response) => {
 
 export const generateCards = async (req: Request, res: Response) => {
   try {
-    const { nodeName, nodeContext } = req.body;
+    const { nodeName, nodeContext, customConfig } = req.body;
     if (!nodeName) {
       return res.status(400).json({ error: 'nodeName is required' });
     }
 
-    const cards = await aiService.generateFlashcards(nodeName, nodeContext || "");
+    const cards = await aiService.generateFlashcards(nodeName, nodeContext || "", customConfig);
     res.json({ cards });
   } catch (error: any) {
     console.error('Error generating cards:', error);
@@ -35,12 +35,12 @@ export const generateCards = async (req: Request, res: Response) => {
 
 export const chatTutor = async (req: Request, res: Response) => {
   try {
-    const { message, history, context } = req.body;
+    const { message, history, context, customConfig } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'message is required' });
     }
 
-    const reply = await aiService.socraticTutor(message, history || [], context || "");
+    const reply = await aiService.socraticTutor(message, history || [], context || "", customConfig);
     res.json({ reply });
   } catch (error: any) {
     console.error('Error in tutor chat:', error);
