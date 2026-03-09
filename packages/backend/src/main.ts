@@ -1,22 +1,29 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import apiRoutes from './routes/api';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-dotenv.config();
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
 
-const app = express();
-const port = process.env.PORT || 3001;
+  // Enable CORS
+  app.enableCors();
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Allow large text payloads
+  // Enable global validation
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-app.use('/api', apiRoutes);
+  // Swagger setup
+  const config = new DocumentBuilder()
+    .setTitle('Learniverse API')
+    .setDescription('The Learniverse Backend API description')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app as any, config);
+  SwaggerModule.setup('api/docs', app as any, document);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Learniverse Backend Running' });
-});
-
-app.listen(port, () => {
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
   console.log(`Backend server listening at http://localhost:${port}`);
-});
+}
+
+bootstrap();

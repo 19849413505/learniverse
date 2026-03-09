@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User Model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Gamification stats
+  totalXp       Int @default(0)
+  currentStreak Int @default(0)
+  longestStreak Int @default(0)
+
+  cardReviews CardReview[]
+}
+
+// Flashcard Model (Nodes in the knowledge graph)
+model Flashcard {
+  id          String   @id @default(uuid())
+  front       String
+  back        String
+  sourceNode  String?  // References the Concept ID it was generated from
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews CardReview[]
+}
+
+// FSRS State for each user-card pair
+model CardReview {
+  id          String   @id @default(uuid())
+  userId      String
+  cardId      String
+
+  // FSRS Core State Fields
+  due         DateTime // Next review time
+  stability   Float
+  difficulty  Float
+  elapsedDays Int
+  scheduledDays Int
+  reps        Int
+  lapses      Int
+  state       Int      // 0=New, 1=Learning, 2=Review, 3=Relearning
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+}
