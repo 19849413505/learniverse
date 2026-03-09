@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Unlock, CheckCircle, BookOpen } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import DiagnosticModal from './diagnostic/DiagnosticModal';
 
 export default function CourseSkillTreeClient() {
   const router = useRouter();
@@ -13,24 +14,57 @@ export default function CourseSkillTreeClient() {
   const [nodes, setNodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Diagnostic State
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [diagnosticQuestions, setDiagnosticQuestions] = useState<any[]>([]);
+
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
-  useEffect(() => {
+  const fetchSkillTree = () => {
     if (!deckId) return;
+    setLoading(true);
     fetch(`${apiEndpoint}/course/skill-tree/demo-user-id/${deckId}`)
       .then(res => res.json())
       .then(data => {
-        setNodes(data.nodes || []);
-        setLoading(false);
+        const fetchedNodes = data.nodes || [];
+        setNodes(fetchedNodes);
+
+        // Trigger diagnostic test if user is completely new to this course (no completed nodes)
+        const hasProgress = fetchedNodes.some((n: any) => n.userStatus === 'completed');
+        if (!hasProgress && fetchedNodes.length > 0) {
+           fetchDiagnosticQuestions();
+        } else {
+           setLoading(false);
+        }
       })
       .catch(e => {
         console.error(e);
         setLoading(false);
       });
+  };
+
+  const fetchDiagnosticQuestions = async () => {
+     try {
+       const res = await fetch(`${apiEndpoint}/course/diagnostic/${deckId}`);
+       const data = await res.json();
+       if (data.questions && data.questions.length > 0) {
+          setDiagnosticQuestions(data.questions);
+          setShowDiagnostic(true);
+       }
+     } catch (e) {
+        console.error("Failed to load diagnostic", e);
+     } finally {
+        setLoading(false);
+     }
+  };
+
+  useEffect(() => {
+    fetchSkillTree();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId, apiEndpoint]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading Skill Tree...</div>;
+    return <div className="flex justify-center items-center h-screen font-bold text-gray-500">Loading Skill Tree...</div>;
   }
 
   // Very naive tree rendering for MVP: just a vertical path
@@ -40,6 +74,17 @@ export default function CourseSkillTreeClient() {
         <h1 className="text-4xl font-extrabold text-gray-900">Math Academy Path</h1>
         <p className="text-gray-500">Mastery learning requires you to complete prerequisites first.</p>
       </div>
+
+      {showDiagnostic && (
+        <DiagnosticModal
+          deckId={deckId as string}
+          questions={diagnosticQuestions}
+          onComplete={() => {
+             setShowDiagnostic(false);
+             fetchSkillTree(); // Refresh tree to show newly unlocked nodes
+          }}
+        />
+      )}
 
       <div className="relative border-l-4 border-indigo-200 ml-8 space-y-12 py-8">
         {nodes.map((node, i) => {
@@ -84,10 +129,8 @@ export default function CourseSkillTreeClient() {
                 {currentStatus === 'unlocked' && (
                   <button
                     className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700"
-                    onClick={async () => {
-                       // MVP: Automatically complete it and refresh
-                       await fetch(`${apiEndpoint}/course/complete-node/demo-user-id/${node.id}`, { method: 'POST' });
-                       window.location.reload();
+                    onClick={() => {
+                       router.push(`/lesson?nodeId=${node.id}&deckId=${deckId}`);
                     }}
                   >
                     <BookOpen className="w-4 h-4" /> Start Micro-Lesson

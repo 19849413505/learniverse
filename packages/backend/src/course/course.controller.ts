@@ -49,4 +49,19 @@ export class CourseController {
   ) {
      return this.courseService.completeNode(userId, nodeId);
   }
+
+  @Get('diagnostic/:deckId')
+  async getDiagnostic(@Param('deckId') deckId: string) {
+     const questions = await this.courseService.generateDiagnosticTest(deckId);
+     return { questions };
+  }
+
+  @Post('diagnostic/submit/:userId/:deckId')
+  async submitDiagnostic(
+     @Param('userId') userId: string,
+     @Param('deckId') deckId: string,
+     @Body() body: { passedNodeIds: string[] }
+  ) {
+     return this.courseService.submitDiagnosticResults(userId, deckId, body.passedNodeIds || []);
+  }
 }

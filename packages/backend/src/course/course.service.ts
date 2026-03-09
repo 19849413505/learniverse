@@ -93,6 +93,74 @@ export class CourseService {
   /**
    * Mark a specific node as completed for a user.
    */
+  /**
+   * Generates a diagnostic test by selecting mid/high tier nodes in the graph.
+   */
+  async generateDiagnosticTest(deckId: string) {
+     // Fetch nodes with their dependents (edges where this node is a source)
+     // Nodes with many dependents are foundational. Nodes with prerequisites but NO dependents are terminal.
+     // A good diagnostic test picks middle-tier nodes to quickly ascertain knowledge boundaries.
+     const nodes = await this.prisma.knowledgeNode.findMany({
+        where: { deckId },
+        include: {
+           prerequisites: true,
+           dependents: true,
+           microLessons: true
+        }
+     });
+
+     // Select nodes that have at least one prerequisite (not the absolute beginning)
+     // For MVP, randomly select 3-5 of these.
+     const midTierNodes = nodes.filter(n => n.prerequisites.length > 0);
+     const candidates = midTierNodes.length > 0 ? midTierNodes : nodes;
+
+     // Shuffle and take up to 3
+     const selected = candidates.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+     return selected.map(node => ({
+        nodeId: node.id,
+        name: node.name,
+        question: node.microLessons[0]?.practice || 'What do you know about this?'
+     }));
+  }
+
+  /**
+   * Process diagnostic results. If a node is passed, mark it and ALL its prerequisites as completed.
+   */
+  async submitDiagnosticResults(userId: string, deckId: string, passedNodeIds: string[]) {
+     const allNodes = await this.prisma.knowledgeNode.findMany({
+        where: { deckId },
+        include: { prerequisites: true }
+     });
+
+     const nodesToComplete = new Set<string>();
+
+     // Recursive function to find all prerequisites
+     const findPrereqs = (nodeId: string) => {
+        if (nodesToComplete.has(nodeId)) return;
+        nodesToComplete.add(nodeId);
+
+        const node = allNodes.find(n => n.id === nodeId);
+        if (node) {
+           for (const prereq of node.prerequisites) {
+              findPrereqs(prereq.sourceId);
+           }
+        }
+     };
+
+     for (const passedId of passedNodeIds) {
+        findPrereqs(passedId);
+     }
+
+     // Mark all found nodes as completed
+     const updatePromises = Array.from(nodesToComplete).map(nodeId =>
+        this.completeNode(userId, nodeId)
+     );
+
+     await Promise.all(updatePromises);
+     return { unlockedCount: nodesToComplete.size };
+  }
+
   async completeNode(userId: string, nodeId: string) {
      // When completing a node for the first time, initialize its FSRS state
      // This allows the system to schedule "implicit" or explicit reviews of this node later
