@@ -81,4 +81,15 @@ export class CardsController {
      };
      return this.cardsService.updateReviewState(reviewId, prismaData);
   }
+
+  @Post('sync/:userId')
+  async syncBatchReviews(
+    @Param('userId') userId: string,
+    @Body() body: { reviews: any[] }
+  ) {
+    if (!body.reviews || !Array.isArray(body.reviews)) {
+      return { count: 0, error: 'Invalid reviews format' };
+    }
+    return this.cardsService.syncBatchReviews(userId, body.reviews);
+  }
 }

@@ -1,35 +1,65 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Inject } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ApiTags } from '@nestjs/swagger';
 import { PersonaConfig } from './agents/chat.agent';
 import { PrismaService } from '../prisma/prisma.service';
+import { Throttle } from '@nestjs/throttler';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import * as crypto from 'crypto';
 
 @ApiTags('Knowledge & AI')
 @Controller()
 export class AiController {
   constructor(
     private readonly aiService: AiService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
+  private hashKey(prefix: string, content: string): string {
+    return `${prefix}:${crypto.createHash('md5').update(content).digest('hex')}`;
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @Post('knowledge/graph')
   async generateGraph(@Body() body: { text: string; customConfig?: any }) {
     if (!body.text) {
       return { error: 'Text content is required' };
     }
-    return this.aiService.generateKnowledgeGraph(body.text, body.customConfig);
+
+    const cacheKey = this.hashKey('graph', body.text);
+    const cachedResult = await this.cacheManager.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
+    const result = await this.aiService.generateKnowledgeGraph(body.text, body.customConfig);
+    await this.cacheManager.set(cacheKey, result);
+    return result;
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @Post('knowledge/cards')
   async generateCards(@Body() body: { nodeName: string; nodeContext?: string; customConfig?: any }) {
     if (!body.nodeName) {
       return { error: 'nodeName is required' };
     }
-    const questions = await this.aiService.generateFlashcards(
-      body.nodeName,
-      body.nodeContext || '',
-      body.customConfig,
-    );
+
+    const contextHash = body.nodeContext ? crypto.createHash('md5').update(body.nodeContext).digest('hex') : 'no-ctx';
+    const cacheKey = `cards:${body.nodeName}:${contextHash}`;
+
+    let questions: any = await this.cacheManager.get(cacheKey);
+
+    if (!questions) {
+      questions = await this.aiService.generateFlashcards(
+        body.nodeName,
+        body.nodeContext || '',
+        body.customConfig,
+      );
+      // We purposefully only cache the questions themselves, not the generated Mock DB IDs
+      await this.cacheManager.set(cacheKey, questions, 3600000); // 1 hr cache
+    }
 
     // Auto-save generated questions to database as Flashcards
     const savedCards = [];

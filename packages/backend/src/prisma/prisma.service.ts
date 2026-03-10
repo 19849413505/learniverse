@@ -12,12 +12,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor(private configService: ConfigService) {
     super();
   }
+
   public get isConnected(): boolean {
     return this._isConnected;
   }
+
   public get isOfflineMode(): boolean {
     return this.configService.get<string>('OFFLINE_MODE') === 'true';
   }
+
   async onModuleInit() {
     if (this.isOfflineMode) {
       this.logger.warn('OFFLINE_MODE is enabled. Starting in Mock DB mode without connection.');

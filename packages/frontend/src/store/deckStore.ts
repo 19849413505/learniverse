@@ -69,12 +69,20 @@ export const useDeckStore = create<DeckState>()(
 
         // Background Sync to Backend (Optional Cloud DB)
         // We sync if it looks like a valid backend UUID (length 36 usually)
+        // We now use the robust syncBatchReviews endpoint implemented earlier
         if (card.id.length > 20 && !card.id.startsWith('card-deck-')) {
             const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
-            fetch(`${API_BASE}/cards/review-update/${card.id}`, {
+            // Need a valid user ID - hardcoded demo-user-id for now as per MVP user auth implementation
+            const userId = 'demo-user-id';
+            fetch(`${API_BASE}/cards/sync/${userId}`, {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify(log.card)
+               body: JSON.stringify({
+                  reviews: [{
+                     cardId: card.id,
+                     ...log.card
+                  }]
+               })
             }).catch(e => console.error("FSRS Cloud Sync failed", e));
         }
 

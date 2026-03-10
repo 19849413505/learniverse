@@ -38,8 +38,6 @@ export default function KnowledgeBasePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  const memoizedGraphData = useMemo(() => graphData, [graphData]);
-
   useEffect(() => {
     if (!containerRef.current) return;
     const resizeObserver = new ResizeObserver((entries) => {
@@ -365,7 +363,7 @@ export default function KnowledgeBasePage() {
             >
               <ForceGraph2D
                 ref={graphRef}
-                graphData={memoizedGraphData}
+                graphData={graphData}
                 nodeAutoColorBy="group"
                 nodeRelSize={8}
                 linkColor={() => 'rgba(255,255,255,0.2)'}
