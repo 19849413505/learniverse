@@ -6,15 +6,37 @@ import { ArrowLeft, Brain, Check, Flame, AlertCircle, X, Sparkles, Trophy } from
 import { useDeckStore } from '@/store/deckStore';
 import { useUserStore } from '@/store/userStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useShallow } from 'zustand/react/shallow';
 import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
-import Confetti from 'react-confetti';
-import SocraticTutor from '@/components/chat/SocraticTutor';
+import dynamic from 'next/dynamic';
+
+// ⚡ Bolt: Dynamically import heavy, conditionally rendered components
+// Confetti and SocraticTutor are large dependencies that are only needed
+// when a user finishes a session or clicks "Ask Tutor".
+// Lazy loading these reduces the initial Time-To-Interactive (TTI) and JS payload size.
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
+const SocraticTutor = dynamic(() => import('@/components/chat/SocraticTutor'), { ssr: false });
 
 export default function StudyPage() {
-  const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore();
-  const { addXP, incrementStreak } = useUserStore();
-  const { apiKey, baseURL, model } = useSettingsStore();
+  // ⚡ Bolt: Use `useShallow` for Zustand stores to prevent full-store re-renders.
+  // Before: The component re-rendered whenever ANY property in the store changed.
+  // After: Only re-renders if these specific destructured properties change.
+  const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore(useShallow((state) => ({
+    getDueCards: state.getDueCards,
+    fsrs: state.fsrs,
+    updateCard: state.updateCard,
+    fetchCloudDueCards: state.fetchCloudDueCards
+  })));
+  const { addXP, incrementStreak } = useUserStore(useShallow((state) => ({
+    addXP: state.addXP,
+    incrementStreak: state.incrementStreak
+  })));
+  const { apiKey, baseURL, model } = useSettingsStore(useShallow((state) => ({
+    apiKey: state.apiKey,
+    baseURL: state.baseURL,
+    model: state.model
+  })));
 
   const [dueCards, setDueCards] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
