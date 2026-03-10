@@ -2,17 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useUserStore } from '@/store/userStore';
-import { useShallow } from 'zustand/react/shallow';
 import { Flame, Star, Gem } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Topbar() {
-  // ⚡ Bolt: Use `useShallow` to prevent full Topbar re-render on unrelated state changes
-  const { xp, streak, gems } = useUserStore(useShallow((state) => ({
-    xp: state.xp,
-    streak: state.streak,
-    gems: state.gems
-  })));
+  const { xp, streak, gems } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
