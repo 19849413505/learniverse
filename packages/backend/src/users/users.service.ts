@@ -8,6 +8,18 @@ export class UsersService {
     @Inject(IUserRepositoryToken) private readonly userRepository: IUserRepository
   ) {}
 
+  private getMockUser(id: string = 'demo-user-id', email: string = 'demo@example.com', name: string = 'Demo User'): any {
+    return {
+      id,
+      email,
+      name,
+      totalXp: 120,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      cardReviews: [], // mock empty learning progress
+    };
+  }
+
   async createUser(email: string, name?: string, id?: string): Promise<User> {
     return this.userRepository.createUser(email, name, id);
   }
