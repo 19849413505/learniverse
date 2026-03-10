@@ -1,3 +1,6 @@
 ## 2024-03-10 - Keyboard Navigation in Spaced Repetition (FSRS)
 **Learning:** Adding global keyboard listeners (e.g., Space/Enter to flip, 1-4 to rate) significantly improves the immersion and flow of spaced repetition study sessions. However, it requires careful state management to ensure listeners do not fire when typing in modal inputs (like the Socratic Tutor chat). Additionally, visual hints (e.g., `[Space]`, `[1]`) are crucial for discoverability.
 **Action:** When adding global keyboard shortcuts to study or interactive views, always verify context (is a modal or text input active?) before intercepting keystrokes. Add clear visual hints and ARIA labels to ensure accessibility is maintained alongside efficiency.
+## 2024-03-10 - Visualizing Progress in Multi-step Modals
+**Learning:** Adding a smooth, animated progress bar (via Framer Motion) to a multi-step modal (like a diagnostic test) dramatically reduces perceived friction. Coupled with keyboard shortcuts (Arrow keys for binary choices), it transforms a tedious form into a fast, fluid, gamified interaction.
+**Action:** When designing wizards or multi-step questions, always include a visual progress indicator and map binary/multiple-choice actions to intuitive keyboard keys (arrows, 1-4) with clear on-screen hints.
