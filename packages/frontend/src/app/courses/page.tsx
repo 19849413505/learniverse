@@ -6,7 +6,8 @@ import { useDeckStore } from '@/store/deckStore';
 import { GraduationCap, ArrowRight, BookOpen } from 'lucide-react';
 
 export default function CoursesListPage() {
-  const { decks } = useDeckStore();
+  // ⚡ Bolt: Prevent full re-renders on unrelated deck store changes by using an atomic selector
+  const decks = useDeckStore((state) => state.decks);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Unlock, CheckCircle, BookOpen } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -13,6 +13,10 @@ export default function CourseSkillTreeClient() {
 
   const [nodes, setNodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ⚡ Bolt: Cache node map for O(1) lookups during render using useMemo
+  // Prevents O(N^2) complexity while ensuring data doesn't go stale
+  const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
 
   // Diagnostic State
   const [showDiagnostic, setShowDiagnostic] = useState(false);
@@ -97,7 +101,9 @@ export default function CourseSkillTreeClient() {
           // Check if all prerequisites are completed
           const prerequisites = node.prerequisites || [];
           const isLocked = prerequisites.some((prereq: any) => {
-             const prereqNode = nodes.find(n => n.id === prereq.sourceId);
+             // ⚡ Bolt: Replace O(N) array search with O(1) map lookup
+             // Critical for large skill trees where rendering becomes O(N^2)
+             const prereqNode = nodeMap.get(prereq.sourceId);
              return prereqNode?.userStatus !== 'completed';
           });
 

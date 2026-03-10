@@ -10,10 +10,10 @@
     "clean": "npm run clean --workspaces --if-present",
     "prebuild": "npm install",
     "build": "npm run build --workspaces --if-present",
-    "build:backend": "npm run build --workspace=packages/backend",
-    "build:frontend": "npm run build --workspace=packages/frontend",
-    "dev": "npm run dev --workspace=packages/frontend",
-    "start:backend": "npm run start --workspace=packages/backend",
-    "test": "npm test --workspace"
+    "test": "npm test --workspace",
+    "build:desktop": "npm run build && npm run build:desktop --workspace=packages/desktop",
+    "build:win": "npm run build && npm run build:win --workspace=packages/desktop",
+    "build:mac": "npm run build && npm run build:mac --workspace=packages/desktop",
+    "build:linux": "npm run build && npm run build:linux --workspace=packages/desktop"
   }
 }

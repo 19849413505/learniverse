@@ -48,9 +48,11 @@ model KnowledgeNode {
   dependents       KnowledgeEdge[] @relation("SourceNode")
 
   progress         NodeProgress[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  // ⚡ Bolt: Index deckId for fast skill tree generation
+  @@index([deckId])
 }
 
 model KnowledgeEdge {
@@ -154,4 +156,8 @@ model CardReview {
   card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@unique([userId, cardId])
+
+  // ⚡ Bolt: Compound index for retrieving user due cards efficiently
+  // Optimizes query: WHERE userId = ? AND due <= NOW() ORDER BY due ASC
+  @@index([userId, due])
 }

@@ -7,7 +7,8 @@ import { Trophy, Medal, Star, ChevronUp, Flame, Users } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 
 export default function LeaguePage() {
-  const { xp } = useUserStore();
+  // ⚡ Bolt: Prevent full re-renders on unrelated user store changes by using an atomic selector
+  const xp = useUserStore((state) => state.xp);
 
   // Mock leaderboard data
   const [leaderboard] = useState([
@@ -55,11 +56,26 @@ export default function LeaguePage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
-                  user.isMe ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-gray-50'
+                className={`relative flex items-center justify-between p-4 rounded-xl transition-colors overflow-hidden outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 focus-visible:ring-inset ${
+                  user.isMe ? 'bg-indigo-50 border border-indigo-200 shadow-sm' : 'hover:bg-gray-50 border border-transparent'
                 }`}
+                tabIndex={0}
+                aria-label={`Rank ${rank}: ${user.name} with ${user.xp} XP. ${user.isMe ? 'This is you.' : ''} ${isPromotionZone ? 'Promotion zone.' : isDemotionZone ? 'Demotion zone.' : ''}`}
               >
-                <div className="flex items-center gap-4">
+                {/* Zone Indicators */}
+                {isPromotionZone && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-400" />}
+                {isDemotionZone && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-400" />}
+
+                {/* You Highlight Pulse */}
+                {user.isMe && (
+                  <motion.div
+                    className="absolute inset-0 bg-indigo-400/10 pointer-events-none"
+                    animate={{ opacity: [0, 0.5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                )}
+
+                <div className="flex items-center gap-4 relative z-10 pl-2">
                   {/* Rank */}
                   <div className={`w-8 font-bold text-lg text-center ${
                     rank === 1 ? 'text-yellow-500' :
@@ -69,23 +85,31 @@ export default function LeaguePage() {
                     {rank}
                   </div>
 
-                  {/* Avatar */}
+                  {/* Avatar with Top 3 Glowing Borders */}
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
                     user.isMe ? 'bg-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  } ${
+                    rank === 1 ? 'ring-2 ring-yellow-400 ring-offset-2 shadow-[0_0_10px_rgba(250,204,21,0.5)]' :
+                    rank === 2 ? 'ring-2 ring-gray-300 ring-offset-2 shadow-[0_0_10px_rgba(209,213,219,0.5)]' :
+                    rank === 3 ? 'ring-2 ring-amber-500 ring-offset-2 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : ''
                   }`}>
                     {user.avatar}
                   </div>
 
-                  {/* Name */}
-                  <div>
+                  {/* Name & Medal */}
+                  <div className="flex items-center gap-2">
                     <span className={`font-semibold ${user.isMe ? 'text-indigo-900' : 'text-gray-800'}`}>
                       {user.name}
                     </span>
-                    {user.isMe && <span className="ml-2 text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">You</span>}
+                    {rank === 1 && <Medal className="w-4 h-4 text-yellow-500" aria-hidden="true" />}
+                    {rank === 2 && <Medal className="w-4 h-4 text-gray-400" aria-hidden="true" />}
+                    {rank === 3 && <Medal className="w-4 h-4 text-amber-600" aria-hidden="true" />}
+
+                    {user.isMe && <span className="text-xs font-bold text-indigo-600 bg-indigo-100/80 border border-indigo-200 px-2 py-0.5 rounded-full">You</span>}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 relative z-10">
                   <span className="font-bold text-gray-600">{user.xp} XP</span>
                 </div>
               </motion.div>

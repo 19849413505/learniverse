@@ -5,10 +5,16 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { BookOpen, BrainCircuit, Target, CheckCircle2, Flame, Network, Activity, Star } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
+import { useShallow } from 'zustand/react/shallow';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 export default function DashboardPage() {
-  const { xp, streak, gems } = useUserStore();
+  // ⚡ Bolt: Prevent unnecessary Dashboard re-renders when unrelated user states (like lastActiveDate) change
+  const { xp, streak, gems } = useUserStore(useShallow((state) => ({
+    xp: state.xp,
+    streak: state.streak,
+    gems: state.gems
+  })));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -37,13 +43,26 @@ export default function DashboardPage() {
           <p className="text-gray-500">You&apos;re on a {streak}-day streak. Keep the momentum going!</p>
         </div>
         <div className="flex gap-4">
-          <Link href="/knowledge" className="px-5 py-2.5 bg-indigo-50 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2">
+          <Link href="/knowledge" className="px-5 py-2.5 bg-indigo-50 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-100 transition-colors flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 outline-none">
             <Network className="w-5 h-5" />
             Import Knowledge
           </Link>
-          <Link href="/study" className="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition-all transform hover:scale-105 flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5" />
-            Start Review
+          <Link href="/study" className="relative group focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-xl outline-none" aria-label="Start your daily flashcard review">
+            <motion.div
+              className="absolute inset-0 bg-indigo-400 rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity"
+              animate={{
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <div className="relative px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition-all transform hover:-translate-y-0.5 flex items-center gap-2 active:scale-95">
+              <BrainCircuit className="w-5 h-5" />
+              Start Review
+            </div>
           </Link>
         </div>
       </div>

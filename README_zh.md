@@ -88,13 +88,11 @@ npm run dev &
 现在，打开浏览器访问 `http://localhost:3000` 即可体验！
 
 ---
+## 🖥️ 构建独立的桌面端应用
 
-## 🖥️ 构建独立的 Windows 桌面端应用
+你可以通过基于 **Electron** 封装，将此 Web 应用一键打包为无需浏览器的、跨平台 (Windows, macOS, Linux) 桌面程序供用户下载。
 
-你可以通过基于 **Electron** 封装，将此 Web 应用一键打包为无需浏览器的、原生的 `.exe` 桌面程序供用户下载。
+👉 **[查看详细的 Learniverse 桌面端打包指南](docs/desktop-packaging-zh.md)**
 
-1. **安装全局打包依赖 (可选):**
-   确保你的环境中安装了 `electron-builder`。
-
-2. **在 `packages/desktop` 目录下执行构建脚本** (或者直接在你的本地机器上按照仓库内脚本执行)。
-   由于平台安全限制，我们将使用 Electron 在本地环境中生成 `dist/Learniverse Setup.exe`。
+1. **在根目录执行自动化构建打包脚本:** `npm run build:desktop`。
+2. 该命令将会自动构建整个前后端代码，并调用 `electron-builder` 打包桌面端应用至 `packages/desktop/dist/` 目录下。

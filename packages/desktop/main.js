@@ -29,11 +29,16 @@ app.whenReady().then(() => {
   // Start backend NestJS process
   console.log('Starting NestJS Backend Server...');
   if (app.isPackaged) {
-    // In production, run the compiled backend directly using node
-    // Assumes node is available or the backend is bundled. If electron-builder is packaging node, it can be called.
-    nestProcess = spawn('node', [path.join(__dirname, '../backend/dist/main.js')], {
+    // In production, run the compiled backend directly using the Electron binary as a pure Node.js runtime
+    nestProcess = spawn(process.execPath, [path.join(__dirname, '../backend/dist/main.js')], {
       cwd: path.join(__dirname, '../backend'),
-      stdio: 'inherit'
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: '1',
+        DESKTOP_ENV: 'true',
+        IS_ELECTRON: 'true'
+      }
     });
   } else {
     // In development, use npm script

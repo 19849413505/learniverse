@@ -12,6 +12,15 @@ export class CardsService {
     });
   }
 
+  // ⚡ Bolt: Batch insert flashcards to avoid N+1 queries
+  // Uses modern createManyAndReturn to get exact inserted rows instantly without duplicate risks
+  async createManyFlashcards(data: { front: string; back: string; sourceNode?: string }[]) {
+    return this.prisma.flashcard.createManyAndReturn({
+      data,
+      skipDuplicates: true,
+    });
+  }
+
   async getAllFlashcards(): Promise<Flashcard[]> {
     return this.prisma.flashcard.findMany();
   }
