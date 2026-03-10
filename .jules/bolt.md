@@ -5,3 +5,7 @@
 ## 2026-03-10 - [N+1 Database Insertions in Bulk Operations]
 **Learning:** Found a common backend anti-pattern where lists of AI-generated content (like flashcards) were being inserted into the database individually inside a `for...of` loop, leading to N+1 database queries and significant overhead.
 **Action:** When saving an array of new entities (e.g., generated cards or micro-lessons), always utilize Prisma's `createMany` API to perform a single batch insertion. Since `createMany` doesn't return the full objects, map the payload and retrieve them using `findMany` with an `in` clause if the generated objects and their specific IDs are needed downstream.
+
+## 2026-03-10 - [Zustand Store React Re-render Bottleneck]
+**Learning:** Destructuring directly from the `useStore()` hook (e.g., `const { a, b } = useUserStore()`) subscribes the component to the ENTIRE store. In complex pages with frequent updates (like `StudyPage` where `xp` and `streak` update often, or `lastActiveDate` updates silently in the background), this causes major, unnecessary component-wide re-renders.
+**Action:** Always use `zustand/react/shallow` (`useShallow`) when extracting multiple properties from a Zustand store, like this: `useUserStore(useShallow(state => ({ a: state.a })))`. If only extracting one property, use an atomic selector: `useUserStore(state => state.a)`.
