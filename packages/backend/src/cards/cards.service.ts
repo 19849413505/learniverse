@@ -68,4 +68,48 @@ export class CardsService {
        data: updateData,
      });
   }
+
+  async syncBatchReviews(userId: string, reviews: any[]) {
+    if (!reviews || reviews.length === 0) return { count: 0 };
+    if (!this.prisma.isConnected || this.prisma.isOfflineMode) {
+      return { count: reviews.length, mock: true };
+    }
+
+    const updates = reviews.map(r => {
+      // Create or update the CardReview state for this user & card
+      return this.prisma.cardReview.upsert({
+        where: {
+          userId_cardId: {
+            userId: userId,
+            cardId: r.cardId,
+          }
+        },
+        create: {
+          userId: userId,
+          cardId: r.cardId,
+          due: r.due ? new Date(r.due) : new Date(),
+          stability: r.stability,
+          difficulty: r.difficulty,
+          elapsedDays: r.elapsed_days || r.elapsedDays,
+          scheduledDays: r.scheduled_days || r.scheduledDays,
+          reps: r.reps,
+          lapses: r.lapses,
+          state: r.state,
+        },
+        update: {
+          due: r.due ? new Date(r.due) : undefined,
+          stability: r.stability,
+          difficulty: r.difficulty,
+          elapsedDays: r.elapsed_days || r.elapsedDays,
+          scheduledDays: r.scheduled_days || r.scheduledDays,
+          reps: r.reps,
+          lapses: r.lapses,
+          state: r.state,
+        }
+      });
+    });
+
+    await this.prisma.$transaction(updates);
+    return { count: updates.length };
+  }
 }

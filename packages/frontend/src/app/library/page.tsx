@@ -9,6 +9,8 @@ export default function LibraryPage() {
   const [extractedText, setExtractedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Processing...');
 
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
@@ -23,6 +25,8 @@ export default function LibraryPage() {
 
     setIsProcessing(true);
     setExtractedText('');
+    setProgress(0);
+    setStatusMessage('Uploading...');
 
     const formData = new FormData();
     formData.append('file', file);
@@ -38,11 +42,48 @@ export default function LibraryPage() {
       }
 
       const data = await response.json();
-      setExtractedText(data.text);
+      if (data.taskId) {
+        // Handle Server-Sent Events for extraction progress
+        const eventSource = new EventSource(`${apiEndpoint}/library/extract/stream/${data.taskId}`);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const parsedData = JSON.parse(event.data);
+
+            if (parsedData.type === 'progress') {
+              setProgress(parsedData.progress || 0);
+              setStatusMessage(parsedData.message || 'Processing...');
+            } else if (parsedData.type === 'complete') {
+              setProgress(100);
+              setStatusMessage('Complete');
+              setExtractedText(parsedData.text);
+              eventSource.close();
+              setIsProcessing(false);
+            } else if (parsedData.type === 'error') {
+              setStatusMessage(`Error: ${parsedData.message}`);
+              eventSource.close();
+              setIsProcessing(false);
+              alert(`Extraction failed: ${parsedData.message}`);
+            }
+          } catch (err) {
+            console.error('Failed to parse SSE event', err);
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE Error:', error);
+          eventSource.close();
+          setIsProcessing(false);
+          setStatusMessage('Connection lost.');
+        };
+      } else if (data.text) {
+         // Fallback for sync responses (in case API reverted to synchronous)
+         setExtractedText(data.text);
+         setIsProcessing(false);
+      }
     } catch (error) {
       console.error(error);
       alert('Error connecting to backend API. Please ensure the backend is running on port 3001 and CORS is enabled.');
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -96,25 +137,42 @@ export default function LibraryPage() {
             </div>
           )}
 
-          <button
-            onClick={handleUpload}
-            disabled={isProcessing || !file}
-            className={`mt-4 w-full py-4 rounded-2xl font-bold text-lg text-white flex justify-center items-center gap-2 transition-all shadow-md
-              ${(isProcessing || !file)
-                ? 'bg-gray-300 cursor-not-allowed shadow-none'
-                : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-1'
-              }`}
-          >
-            {isProcessing ? (
-              <span className="animate-pulse flex items-center gap-2">
-                <Database className="w-5 h-5 animate-spin" /> Processing...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <UploadCloud className="w-5 h-5" /> Extract Text
-              </span>
+          <div className="mt-4 w-full">
+            {isProcessing && (
+              <div className="mb-4 space-y-2">
+                <div className="flex justify-between text-sm text-gray-600 font-medium">
+                  <span>{statusMessage}</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              </div>
             )}
-          </button>
+
+            <button
+              onClick={handleUpload}
+              disabled={isProcessing || !file}
+              className={`w-full py-4 rounded-2xl font-bold text-lg text-white flex justify-center items-center gap-2 transition-all shadow-md
+                ${(isProcessing || !file)
+                  ? 'bg-gray-300 cursor-not-allowed shadow-none'
+                  : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-1'
+                }`}
+            >
+              {isProcessing ? (
+                <span className="animate-pulse flex items-center gap-2">
+                  <Database className="w-5 h-5 animate-spin" /> Working...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5" /> Extract Text
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Result Area */}
