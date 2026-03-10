@@ -2,27 +2,4 @@
 > learniverse-backend@1.0.0 start
 > node dist/main.js
 
-[32m[Nest] 25131  - [39m03/09/2026, 1:42:50 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
-[31m[Nest] 25131  - [39m03/09/2026, 1:42:50 PM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39m[31mInvalid value undefined for datasource "db" provided to PrismaClient constructor.
-It should have this form: { url: "CONNECTION_STRING" }
-Read more at https://pris.ly/d/client-constructor[39m
-PrismaClientConstructorValidationError: Invalid value undefined for datasource "db" provided to PrismaClient constructor.
-It should have this form: { url: "CONNECTION_STRING" }
-Read more at https://pris.ly/d/client-constructor
-    at Object.datasources (/app/node_modules/@prisma/client/runtime/library.js:124:86)
-    at Gl (/app/node_modules/@prisma/client/runtime/library.js:126:2527)
-    at new t (/app/node_modules/@prisma/client/runtime/library.js:130:748)
-    at new PrismaService (/app/packages/backend/dist/prisma/prisma.service.js:32:9)
-    at Injector.instantiateClass (/app/packages/backend/node_modules/@nestjs/core/injector/injector.js:373:19)
-    at callback (/app/packages/backend/node_modules/@nestjs/core/injector/injector.js:65:45)
-    at async Injector.resolveConstructorParams (/app/packages/backend/node_modules/@nestjs/core/injector/injector.js:145:24)
-    at async Injector.loadInstance (/app/packages/backend/node_modules/@nestjs/core/injector/injector.js:70:13)
-    at async Injector.loadProvider (/app/packages/backend/node_modules/@nestjs/core/injector/injector.js:98:9)
-    at async /app/packages/backend/node_modules/@nestjs/core/injector/instance-loader.js:56:13
-npm error Lifecycle script `start` failed with error:
-npm error code 1
-npm error path /app/packages/backend
-npm error workspace learniverse-backend@1.0.0
-npm error location /app/packages/backend
-npm error command failed
-npm error command sh -c node dist/main.js
+Backend server listening at http://localhost:3001

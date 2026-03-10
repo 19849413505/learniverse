@@ -27,18 +27,6 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`Backend server listening at http://localhost:${port}`);
-
-  // Handle perfect desktop encapsulation by gracefully shutting down and logging
-  const isDesktop = process.env.IS_ELECTRON === 'true' || process.env.DESKTOP_ENV === 'true';
-  if (isDesktop) {
-    console.log(`[Desktop Encapsulation Mode Active]`);
-    process.on('SIGTERM', async () => {
-      console.log('SIGTERM signal received: closing HTTP server');
-      await app.close();
-      console.log('HTTP server closed');
-      process.exit(0);
-    });
-  }
 }
 
 bootstrap();

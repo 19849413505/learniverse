@@ -17,11 +17,6 @@ export class UsersController {
     return this.usersService.getUserById(id);
   }
 
-  @Get(':id/analytics')
-  async getUserAnalytics(@Param('id') id: string) {
-     return this.usersService.getUserAnalytics(id);
-  }
-
   @Get()
   async getAllUsers() {
     return this.usersService.getAllUsers();

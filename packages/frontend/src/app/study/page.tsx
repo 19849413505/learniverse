@@ -10,7 +10,6 @@ import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
 import Confetti from 'react-confetti';
 import SocraticTutor from '@/components/chat/SocraticTutor';
-import { FsrsCharts } from '@/components/study/FsrsCharts';
 
 export default function StudyPage() {
   const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore();
@@ -49,19 +48,13 @@ export default function StudyPage() {
 
   if (dueCards.length === 0 && !isFinished) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-6 w-full">
-        <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center shadow-lg">
+      <div className="flex flex-col items-center justify-center h-[70vh] space-y-6">
+        <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center">
           <Check className="w-12 h-12" />
         </div>
         <h2 className="text-3xl font-bold text-gray-900">You&apos;re all caught up!</h2>
         <p className="text-gray-500 text-lg">You&apos;ve mastered all due cards for today.</p>
-
-        {/* Render Charts when done */}
-        <div className="w-full mt-8">
-          <FsrsCharts />
-        </div>
-
-        <Link href="/" className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition transform hover:-translate-y-1 mt-6 inline-block">
+        <Link href="/" className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition">
           Return to Dashboard
         </Link>
       </div>
@@ -120,7 +113,7 @@ export default function StudyPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center py-12 space-y-6 text-center w-full"
+        className="flex flex-col items-center justify-center h-[70vh] space-y-6 text-center"
       >
         {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
         <div className="w-32 h-32 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center border-4 border-yellow-300 shadow-xl relative">
@@ -135,16 +128,10 @@ export default function StudyPage() {
           </motion.div>
         </div>
         <h2 className="text-4xl font-extrabold text-gray-900">Session Complete!</h2>
-        <p className="text-gray-500 text-lg max-w-md mb-8">
+        <p className="text-gray-500 text-lg max-w-md">
           Excellent work! Your memory stability has increased. The FSRS algorithm has scheduled your next reviews perfectly.
         </p>
-
-        {/* Render Charts after completing study */}
-        <div className="w-full my-8">
-          <FsrsCharts />
-        </div>
-
-        <Link href="/" className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 transition transform hover:-translate-y-1 mt-8 inline-block">
+        <Link href="/" className="px-8 py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 transition transform hover:-translate-y-1 mt-4">
           Return to Path
         </Link>
       </motion.div>

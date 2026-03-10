@@ -1,6 +1,5 @@
-import { Controller, Post, Get, Body, Param, Res } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { CourseService } from './course.service';
-import { Response } from 'express';
 import { AiService } from '../ai/ai.service';
 import { ApiTags } from '@nestjs/swagger';
 
@@ -14,32 +13,24 @@ export class CourseController {
 
   @Post('generate-tree')
   async generateCourseTree(
-    @Body() body: { text: string; deckId: string; isDeepResearch?: boolean; customConfig?: any }
+    @Body() body: { text: string; deckId: string; customConfig?: any }
   ) {
     if (!body.text || !body.deckId) {
       return { error: 'text and deckId are required' };
     }
 
-    // Trigger async processing in the background. Return immediately.
-    // In a real production system, use BullMQ/Redis here. For MVP, we use fire-and-forget.
-    this.courseService.processCourseGenerationAsync(
-       body.deckId,
-       body.text,
-       body.isDeepResearch,
-       body.customConfig,
-       this.aiService
-    ).catch(e => console.error('Background generation failed', e));
+    // 1. Generate structured graph with MicroLessons via AI
+    const graphOutput = await this.aiService.getCourseBuilderAgent(body.customConfig).process({
+      text: body.text
+    });
+
+    // 2. Save the structure to PostgreSQL
+    const result = await this.courseService.saveCourseGraph(body.deckId, graphOutput);
 
     return {
-      message: 'Course Skill Tree generation started.',
-      deckId: body.deckId
+      message: 'Course Skill Tree Generated Successfully',
+      ...result
     };
-  }
-
-  @Get('generate-tree/stream/:deckId')
-  streamGenerationProgress(@Param('deckId') deckId: string, @Res() res: Response) {
-    // Note: We need to import @Res() from @nestjs/common and Response from express
-    return this.courseService.subscribeToProgress(deckId, res as any);
   }
 
   @Get('skill-tree/:userId/:deckId')

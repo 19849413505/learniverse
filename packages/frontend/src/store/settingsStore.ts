@@ -6,9 +6,6 @@ interface SettingsState {
   baseURL: string;
   model: string;
   provider: 'DeepSeek' | 'OpenAI' | 'Custom';
-  // Online OCR Engine configs
-  ocrEngine: 'tesseract' | 'llm'; // 'tesseract' (offline) or 'llm' (online multi-modal)
-  ocrModel: string; // e.g., 'gpt-4o', 'gemini-1.5-pro'
   setSettings: (settings: Partial<SettingsState>) => void;
 }
 
@@ -19,8 +16,6 @@ export const useSettingsStore = create<SettingsState>()(
       baseURL: 'https://api.deepseek.com/v1',
       model: 'deepseek-chat',
       provider: 'DeepSeek',
-      ocrEngine: 'tesseract',
-      ocrModel: 'gpt-4o',
       setSettings: (settings) => set((state) => ({ ...state, ...settings })),
     }),
     {
