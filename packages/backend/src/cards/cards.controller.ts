@@ -22,27 +22,19 @@ export class CardsController {
   ) {
     const questions = await this.aiService.getQuestionAgent(body.customConfig).process(body);
 
-    // ⚡ Bolt: Auto-save generated questions using batch insertion to prevent N+1 database queries
-    const validQuestions = questions.filter(q => q.front && q.back);
-    const cardData = validQuestions.map(q => ({
-      front: q.front,
-      back: q.back,
-      sourceNode: body.nodeName,
-    }));
-
-    if (cardData.length > 0) {
-       const createdDbCards = await this.cardsService.createManyFlashcards(cardData);
-
-       // Map the created DB cards back with their AI relevance scores
-       const savedCards = createdDbCards.map(dbCard => {
-         const originalQ = validQuestions.find(q => q.front === dbCard.front);
-         return { ...dbCard, relevance: originalQ?.relevance || 1 };
-       });
-
-       return { generated: savedCards.length, cards: savedCards };
+    // Auto-save generated questions to database as Flashcards
+    const savedCards = [];
+    for (const q of questions) {
+      if (q.front && q.back) {
+        const card = await this.cardsService.createFlashcard({
+          front: q.front,
+          back: q.back,
+          sourceNode: body.nodeName,
+        });
+        savedCards.push({ ...card, relevance: q.relevance });
+      }
     }
-
-    return { generated: 0, cards: [] };
+    return { generated: savedCards.length, cards: savedCards };
   }
 
   @Get()
