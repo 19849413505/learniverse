@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Brain, Check, Flame, AlertCircle, X, Sparkles, Trophy } from 'lucide-react';
 import { useDeckStore } from '@/store/deckStore';
@@ -87,8 +87,19 @@ export default function StudyPage() {
     setIsFlipped(true);
   };
 
-  const handleRate = (rating: Rating) => {
+  const handleFinish = useCallback(() => {
+    setIsFinished(true);
+    incrementStreak();
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000);
+  }, [incrementStreak]);
+
+  // ⚡ Bolt: Use useCallback to preserve referential equality of handleRate
+  // This prevents the memoized RatingButton components from re-rendering
+  // when unrelated states change in the parent component.
+  const handleRate = useCallback((rating: Rating) => {
     const card = dueCards[currentIndex];
+    if (!card) return;
 
     // 1. Calculate next state using FSRS
     const schedulingInfo = fsrs.repeat(card.fsrsCard, new Date());
@@ -121,14 +132,7 @@ export default function StudyPage() {
     } else {
       handleFinish();
     }
-  };
-
-  const handleFinish = () => {
-    setIsFinished(true);
-    incrementStreak();
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 5000);
-  };
+  }, [dueCards, currentIndex, fsrs, updateCard, addXP, handleFinish]);
 
   if (isFinished) {
     return (
@@ -261,28 +265,28 @@ export default function StudyPage() {
               label="Again"
               sub="< 1m"
               color="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200 hover:border-rose-300"
-              onClick={() => handleRate(Rating.Again)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Hard}
               label="Hard"
               sub="5m"
               color="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 hover:border-orange-300"
-              onClick={() => handleRate(Rating.Hard)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Good}
               label="Good"
               sub="1d"
               color="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:border-green-300"
-              onClick={() => handleRate(Rating.Good)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Easy}
               label="Easy"
               sub="4d"
               color="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300"
-              onClick={() => handleRate(Rating.Easy)}
+              onRate={handleRate}
             />
           </div>
         )}
@@ -291,14 +295,16 @@ export default function StudyPage() {
   );
 }
 
-function RatingButton({ rating, label, sub, color, onClick }: { rating: Rating, label: string, sub: string, color: string, onClick: () => void }) {
+// ⚡ Bolt: Wrap RatingButton with React.memo to prevent expensive style and layout recalculations
+// when parent component (StudyPage) re-renders due to unrelated state changes.
+const RatingButton = memo(function RatingButton({ rating, label, sub, color, onRate }: { rating: Rating, label: string, sub: string, color: string, onRate: (r: Rating) => void }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => onRate(rating)}
       className={`flex flex-col items-center justify-center py-3 sm:py-4 rounded-xl border-2 transition transform active:scale-95 ${color}`}
     >
       <span className="font-bold text-sm sm:text-base">{label}</span>
       <span className="text-[10px] sm:text-xs opacity-80 mt-1 font-medium">{sub}</span>
     </button>
   );
-}
+});

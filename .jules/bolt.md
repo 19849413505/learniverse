@@ -17,3 +17,7 @@
 ## 2026-03-10 - [Missing Indexes in Prisma FSRS Model]
 **Learning:** For FSRS applications, querying a user's due cards (`where userId = ? and due <= NOW() order by due asc`) is the most frequent and critical database operation. Missing a compound index on `[userId, due]` will eventually cause severe performance degradation (Full Table Scans and File Sorts) as user review history grows. Similarly, `KnowledgeNode` querying via `deckId` requires an index.
 **Action:** Always map your high-frequency backend Prisma queries to explicit `@@index` annotations in `schema.prisma`. For queries combining equality (`userId`) and range/sort (`due`), a compound index matching that order is required.
+
+## 2026-03-10 - [Avalanche Re-renders via Inline Functions]
+**Learning:** In complex interactive views like `StudyPage`, passing inline functions (e.g., `onClick={() => handleRate()}`) to child components causes them to receive a new function reference on every single parent render. Without `React.memo` and `useCallback`, a tiny parent state change (like a progress bar updating) forces all child buttons/cards to re-render, consuming excessive CPU.
+**Action:** When child components are static or rely on predictable inputs, wrap them in `React.memo`. For any callback props passed to them, wrap the parent function in `useCallback` to maintain referential equality across renders, completely short-circuiting the React reconciliation process for those children.
