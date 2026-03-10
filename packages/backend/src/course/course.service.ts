@@ -20,16 +20,24 @@ export class CourseService {
       const nodeMap = new Map<string, string>(); // Maps original agent ID to new Database UUID
 
       for (const nodeData of graph.nodes) {
+        const steps = nodeData.microLesson?.steps || [];
+        const introStep = steps.find(s => s.step_type === 'intro');
+        const exampleStep = steps.find(s => s.step_type === 'example');
+        const practiceStep = steps.find(s => s.step_type === 'independent_practice' || s.step_type === 'guided_practice');
+
         const createdNode = await tx.knowledgeNode.create({
           data: {
             name: nodeData.name,
             description: nodeData.description,
             deckId: deckId,
+            difficultyLevel: nodeData.difficulty_level,
+            roleplayHook: nodeData.roleplay_hook,
             microLessons: {
               create: {
-                explanation: nodeData.microLesson.explanation,
-                example: nodeData.microLesson.example,
-                practice: nodeData.microLesson.practice,
+                explanation: introStep?.content || '',
+                example: exampleStep?.content || '',
+                practice: practiceStep?.content || '',
+                steps: nodeData.microLesson?.steps ? JSON.parse(JSON.stringify(nodeData.microLesson.steps)) : []
               }
             }
           }
@@ -37,7 +45,7 @@ export class CourseService {
         nodeMap.set(nodeData.id, createdNode.id);
       }
 
-      // 2. Create Edges (Prerequisites) based on the mapped IDs
+      // 2. Create Edges based on the mapped IDs
       for (const edge of graph.edges) {
         const sourceDbId = nodeMap.get(edge.source);
         const targetDbId = nodeMap.get(edge.target);
@@ -53,7 +61,21 @@ export class CourseService {
         }
       }
 
-      return { success: true, nodesCreated: graph.nodes.length, edgesCreated: graph.edges.length };
+      // 3. Create Diagnostic Questions
+      for (const dq of graph.diagnostic_questions || []) {
+        const targetDbId = nodeMap.get(dq.tests_node_id);
+        if (targetDbId) {
+          await tx.diagnosticQuestion.create({
+            data: {
+              nodeId: targetDbId,
+              question: dq.question,
+              answer: dq.answer
+            }
+          });
+        }
+      }
+
+      return { success: true, nodesCreated: graph.nodes.length, edgesCreated: graph.edges.length, diagnosticsCreated: (graph.diagnostic_questions || []).length };
     });
   }
 
@@ -95,6 +117,7 @@ export class CourseService {
    */
   /**
    * Generates a diagnostic test by selecting mid/high tier nodes in the graph.
+   * Utilizes AI-generated diagnostic questions if available, falling back to practice questions.
    */
   async generateDiagnosticTest(deckId: string) {
      // Fetch nodes with their dependents (edges where this node is a source)
@@ -105,23 +128,51 @@ export class CourseService {
         include: {
            prerequisites: true,
            dependents: true,
-           microLessons: true
+           microLessons: true,
+           diagnosticTests: true // Explicitly fetch AI-generated diagnostic questions
         }
      });
 
-     // Select nodes that have at least one prerequisite (not the absolute beginning)
-     // For MVP, randomly select 3-5 of these.
-     const midTierNodes = nodes.filter(n => n.prerequisites.length > 0);
-     const candidates = midTierNodes.length > 0 ? midTierNodes : nodes;
+     // Prioritize mid-tier (has prerequisites AND dependents) or higher-difficulty nodes
+     const midTierNodes = nodes.filter(n => n.prerequisites.length > 0 && n.dependents.length > 0);
+     const hardNodes = nodes.filter(n => n.difficultyLevel === 'application' || n.difficultyLevel === 'understanding');
 
-     // Shuffle and take up to 3
-     const selected = candidates.sort(() => 0.5 - Math.random()).slice(0, 3);
+     // Combine unique candidates, fallback to all nodes if graph is too small/shallow
+     const combinedCandidates = Array.from(new Set([...midTierNodes, ...hardNodes]));
+     const candidates = combinedCandidates.length >= 3 ? combinedCandidates : nodes.filter(n => n.prerequisites.length > 0);
+     const finalCandidates = candidates.length > 0 ? candidates : nodes;
 
-     return selected.map(node => ({
-        nodeId: node.id,
-        name: node.name,
-        question: node.microLessons[0]?.practice || 'What do you know about this?'
-     }));
+     // Shuffle and take up to 5 questions
+     const selected = finalCandidates.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+     return selected.map(node => {
+        // Prefer the explicitly AI-generated diagnostic question
+        let questionText = node.diagnosticTests[0]?.question;
+        let answerText = node.diagnosticTests[0]?.answer;
+
+        // Fallback 1: Extract from the JSON 'steps' if it exists
+        if (!questionText && node.microLessons[0]?.steps) {
+            const steps: any = node.microLessons[0].steps;
+            if (Array.isArray(steps)) {
+                const practiceStep = steps.find(s => s.step_type === 'independent_practice');
+                if (practiceStep) {
+                    questionText = practiceStep.content;
+                }
+            }
+        }
+
+        // Fallback 2: Legacy field
+        if (!questionText) {
+            questionText = node.microLessons[0]?.practice || `What are the core concepts of ${node.name}?`;
+        }
+
+        return {
+           nodeId: node.id,
+           name: node.name,
+           question: questionText,
+           answer: answerText || 'Self-assessed' // Send answer to frontend if we have it for future features
+        };
+     });
   }
 
   /**
