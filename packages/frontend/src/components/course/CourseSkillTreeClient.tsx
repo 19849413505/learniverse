@@ -24,6 +24,12 @@ export default function CourseSkillTreeClient() {
 
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
+  useEffect(() => {
+    if (!deckId) {
+      router.push('/courses');
+    }
+  }, [deckId, router]);
+
   const fetchSkillTree = () => {
     if (!deckId) return;
     setLoading(true);

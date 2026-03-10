@@ -117,6 +117,7 @@ export class CourseService {
    */
   /**
    * Generates a diagnostic test by selecting mid/high tier nodes in the graph.
+   * Utilizes AI-generated diagnostic questions if available, falling back to practice questions.
    */
   async generateDiagnosticTest(deckId: string) {
      // Fetch nodes with their dependents (edges where this node is a source)
@@ -127,23 +128,51 @@ export class CourseService {
         include: {
            prerequisites: true,
            dependents: true,
-           microLessons: true
+           microLessons: true,
+           diagnosticTests: true // Explicitly fetch AI-generated diagnostic questions
         }
      });
 
-     // Select nodes that have at least one prerequisite (not the absolute beginning)
-     // For MVP, randomly select 3-5 of these.
-     const midTierNodes = nodes.filter(n => n.prerequisites.length > 0);
-     const candidates = midTierNodes.length > 0 ? midTierNodes : nodes;
+     // Prioritize mid-tier (has prerequisites AND dependents) or higher-difficulty nodes
+     const midTierNodes = nodes.filter(n => n.prerequisites.length > 0 && n.dependents.length > 0);
+     const hardNodes = nodes.filter(n => n.difficultyLevel === 'application' || n.difficultyLevel === 'understanding');
 
-     // Shuffle and take up to 3
-     const selected = candidates.sort(() => 0.5 - Math.random()).slice(0, 3);
+     // Combine unique candidates, fallback to all nodes if graph is too small/shallow
+     const combinedCandidates = Array.from(new Set([...midTierNodes, ...hardNodes]));
+     const candidates = combinedCandidates.length >= 3 ? combinedCandidates : nodes.filter(n => n.prerequisites.length > 0);
+     const finalCandidates = candidates.length > 0 ? candidates : nodes;
 
-     return selected.map(node => ({
-        nodeId: node.id,
-        name: node.name,
-        question: node.microLessons[0]?.practice || 'What do you know about this?'
-     }));
+     // Shuffle and take up to 5 questions
+     const selected = finalCandidates.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+     return selected.map(node => {
+        // Prefer the explicitly AI-generated diagnostic question
+        let questionText = node.diagnosticTests[0]?.question;
+        let answerText = node.diagnosticTests[0]?.answer;
+
+        // Fallback 1: Extract from the JSON 'steps' if it exists
+        if (!questionText && node.microLessons[0]?.steps) {
+            const steps: any = node.microLessons[0].steps;
+            if (Array.isArray(steps)) {
+                const practiceStep = steps.find(s => s.step_type === 'independent_practice');
+                if (practiceStep) {
+                    questionText = practiceStep.content;
+                }
+            }
+        }
+
+        // Fallback 2: Legacy field
+        if (!questionText) {
+            questionText = node.microLessons[0]?.practice || `What are the core concepts of ${node.name}?`;
+        }
+
+        return {
+           nodeId: node.id,
+           name: node.name,
+           question: questionText,
+           answer: answerText || 'Self-assessed' // Send answer to frontend if we have it for future features
+        };
+     });
   }
 
   /**
