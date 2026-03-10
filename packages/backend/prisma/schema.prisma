@@ -25,6 +25,34 @@ model User {
 
   cardReviews CardReview[]
   nodeProgress NodeProgress[]
+  tutorAffinities TutorAffinity[]
+  diaryEntries DiaryEntry[]
+}
+
+// Socrates-7 Emotional Affection System
+
+model TutorAffinity {
+  id          String   @id @default(uuid())
+  userId      String
+  personaId   String   // e.g., 'socrates', 'feynman', 'seneca'
+  score       Int      @default(0) // Ranges from -100 to 100
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, personaId])
+}
+
+model DiaryEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  personaId   String
+  content     String
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
 }
 
 // Knowledge Graph & Math Academy Course Structures

@@ -4,6 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { useSettingsStore } from '@/store/settingsStore';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 export interface Persona {
   id: string;
@@ -175,9 +179,18 @@ export default function SocraticTutor({ isOpen, onClose, contextTitle, contextBo
                     ? 'bg-indigo-600 text-white rounded-br-none'
                     : msg.role === 'system'
                     ? 'bg-red-50 text-red-600 border border-red-100 w-full text-center'
-                    : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
+                    : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none prose prose-sm max-w-none'
                 }`}>
-                  {msg.content}
+                  {msg.role === 'assistant' ? (
+                     <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                     >
+                        {msg.content}
+                     </ReactMarkdown>
+                  ) : (
+                     msg.content
+                  )}
                 </div>
               </div>
             ))}

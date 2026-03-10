@@ -5,6 +5,7 @@ import { AiModule } from './ai/ai.module';
 import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
 import { CourseModule } from './course/course.module';
+import { AffinityModule } from './affinity/affinity.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CourseModule } from './course/course.module';
     UsersModule,
     CardsModule,
     CourseModule,
+    AffinityModule,
   ],
   controllers: [],
   providers: [],

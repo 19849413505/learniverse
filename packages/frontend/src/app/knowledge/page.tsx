@@ -15,7 +15,7 @@ export default function KnowledgeBasePage() {
   const { addDeck, addCards } = useDeckStore();
   const { apiKey, baseURL, model } = useSettingsStore();
 
-  const [fileText, setFileText] = useState('');
+  const [fileTexts, setFileTexts] = useState<string[]>(['']);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('Idle');
@@ -50,13 +50,15 @@ export default function KnowledgeBasePage() {
 
   // Mimic Exam State
   const [isMimicMode, setIsMimicMode] = useState(false);
+  const [isDeepResearch, setIsDeepResearch] = useState(false);
   const [referenceFormat, setReferenceFormat] = useState('');
   const [topicName, setTopicName] = useState('');
 
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
   const handleProcess = async () => {
-    if (!fileText.trim()) return;
+    const combinedText = fileTexts.filter(t => t.trim().length > 0).join('\n\n---\n\n');
+    if (!combinedText) return;
 
     setIsProcessing(true);
     setProgress(10);
@@ -74,7 +76,7 @@ export default function KnowledgeBasePage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               nodeName: topicName,
-              context: fileText,
+              context: combinedText,
               referenceFormat,
               count: 5,
               customConfig
@@ -129,26 +131,23 @@ export default function KnowledgeBasePage() {
       }
 
       // Math Academy Course Builder Mode
-      setProcessingStage('Analyzing document semantics...');
-      setProgress(40);
-      setProcessingStage('Extracting atomic concepts & building skill tree...');
+      setProcessingStage('Initializing AI Agents...');
+      setProgress(5);
 
       const response = await fetch(`${apiEndpoint}/course/generate-tree`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: fileText,
+          text: combinedText,
           deckId: deckId,
+          isDeepResearch,
           customConfig
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate Math Academy skill tree');
+        throw new Error('Failed to start Math Academy skill tree generation');
       }
-
-      setProgress(80);
-      setProcessingStage('Generating cognitive scaffolding & micro-lessons...');
 
       addDeck({
         id: deckId,
@@ -158,13 +157,30 @@ export default function KnowledgeBasePage() {
         cardCount: 0 // Will be populated dynamically as user unlocks nodes
       });
 
-      setProgress(100);
-      setProcessingStage('Complete!');
+      // Subscribe to Server-Sent Events for real-time progress
+      const eventSource = new EventSource(`${apiEndpoint}/course/generate-tree/stream/${deckId}`);
 
-      // Instead of forcing the 2D graph, we redirect to a new skill tree page
-      setTimeout(() => {
-        router.push(`/course?deckId=${deckId}`);
-      }, 1500);
+      eventSource.addEventListener('PROGRESS', (e) => {
+         const data = JSON.parse(e.data);
+         if (data.progress) setProgress(data.progress);
+         if (data.message) setProcessingStage(data.message);
+      });
+
+      eventSource.addEventListener('COMPLETE', (e) => {
+         eventSource.close();
+         setProgress(100);
+         setProcessingStage('✅ Generation Complete!');
+         setTimeout(() => {
+            router.push(`/course?deckId=${deckId}`);
+         }, 1500);
+      });
+
+      eventSource.addEventListener('ERROR', (e) => {
+         eventSource.close();
+         const data = JSON.parse(e.data);
+         alert(`AI Generation Error: ${data.message}`);
+         setIsProcessing(false);
+      });
 
     } catch (error) {
       console.error(error);
@@ -194,9 +210,17 @@ export default function KnowledgeBasePage() {
               <FileText className="text-indigo-600 w-5 h-5" />
               <h2 className="font-bold text-gray-800">Source Material</h2>
             </div>
-            <div className="flex bg-slate-100 p-1 rounded-lg">
-               <button onClick={() => setIsMimicMode(false)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${!isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Graph Mode</button>
-               <button onClick={() => setIsMimicMode(true)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Mimic Exam Mode</button>
+            <div className="flex gap-2">
+              <button
+                 onClick={() => setIsDeepResearch(!isDeepResearch)}
+                 className={`px-3 py-1 text-xs rounded-md font-bold transition-all border ${isDeepResearch ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-500'}`}
+              >
+                 ✨ Deep Research Mode
+              </button>
+              <div className="flex bg-slate-100 p-1 rounded-lg">
+                 <button onClick={() => setIsMimicMode(false)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${!isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Graph Mode</button>
+                 <button onClick={() => setIsMimicMode(true)} className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${isMimicMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>Mimic Exam Mode</button>
+              </div>
             </div>
           </div>
 
@@ -218,19 +242,37 @@ export default function KnowledgeBasePage() {
              </div>
           )}
 
-          <textarea
-            className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
-            placeholder={isMimicMode ? "Paste the core knowledge material to test on..." : "Paste your syllabus, article, or book chapter here..."}
-            value={fileText}
-            onChange={(e) => setFileText(e.target.value)}
-            disabled={isProcessing || showGraph}
-          />
+          <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+            {fileTexts.map((text, idx) => (
+               <textarea
+                 key={idx}
+                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow min-h-[150px]"
+                 placeholder={isMimicMode ? `Document ${idx + 1} - Paste knowledge material...` : `Document ${idx + 1} - Paste syllabus, article, or book chapter here...`}
+                 value={text}
+                 onChange={(e) => {
+                    const newTexts = [...fileTexts];
+                    newTexts[idx] = e.target.value;
+                    setFileTexts(newTexts);
+                 }}
+                 disabled={isProcessing || showGraph}
+               />
+            ))}
+            {fileTexts.length < 5 && (
+               <button
+                  onClick={() => setFileTexts([...fileTexts, ''])}
+                  className="text-indigo-600 text-sm font-bold mt-2 hover:underline self-start"
+                  disabled={isProcessing || showGraph}
+               >
+                  + Add another document
+               </button>
+            )}
+          </div>
 
           <button
             onClick={handleProcess}
-            disabled={isProcessing || showGraph || !fileText.trim()}
+            disabled={isProcessing || showGraph || fileTexts.every(t => !t.trim())}
             className={`mt-4 w-full py-4 rounded-2xl font-bold text-lg text-white flex justify-center items-center gap-2 transition-all shadow-md
-              ${(isProcessing || showGraph || !fileText.trim())
+              ${(isProcessing || showGraph || fileTexts.every(t => !t.trim()))
                 ? 'bg-gray-300 cursor-not-allowed shadow-none'
                 : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-1'
               }`}

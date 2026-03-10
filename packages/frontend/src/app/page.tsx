@@ -11,22 +11,44 @@ export default function DashboardPage() {
   const { xp, streak, gems } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
+  const [analytics, setAnalytics] = useState<any>(null);
+
   useEffect(() => {
     setMounted(true);
+
+    // Fetch user analytics from backend
+    const fetchAnalytics = async () => {
+      try {
+        const userId = 'demo-user-id'; // using default demo user
+        const res = await fetch(`http://localhost:3001/users/${userId}/analytics`);
+        if (res.ok) {
+          const data = await res.json();
+          setAnalytics(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics', err);
+      }
+    };
+    fetchAnalytics();
   }, []);
 
   if (!mounted) return null;
 
   // Mock data for the "Personalized Profile" learning curve
-  const learningData = [
-    { day: 'Mon', accuracy: 65, retention: 40 },
-    { day: 'Tue', accuracy: 72, retention: 55 },
-    { day: 'Wed', accuracy: 68, retention: 60 },
-    { day: 'Thu', accuracy: 85, retention: 75 },
-    { day: 'Fri', accuracy: 82, retention: 80 },
-    { day: 'Sat', accuracy: 90, retention: 88 },
-    { day: 'Sun', accuracy: 95, retention: 92 },
+  const learningData = analytics?.retentionData?.map((item: any) => ({
+    day: `Day ${item.days}`,
+    retention: item.retention
+  })) || [
+    { day: '0', retention: 100 },
+    { day: '1', retention: 80 },
+    { day: '2', retention: 60 },
+    { day: '3', retention: 40 },
   ];
+
+  const xpHistory = analytics?.xpHistory?.map((item: any) => ({
+     day: item.date,
+     xp: item.xp
+  })) || [];
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -113,8 +135,23 @@ export default function DashboardPage() {
           <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
               <BrainCircuit className="w-5 h-5 text-purple-500" />
-              Memory Retention
+              Memory Retention (FSRS)
             </h3>
+
+            <div className="flex gap-4 mb-4 text-sm font-medium text-gray-500">
+               <div className="flex flex-col">
+                  <span>Reviews</span>
+                  <strong className="text-purple-600 text-lg">{analytics?.totalReviews || 0}</strong>
+               </div>
+               <div className="flex flex-col">
+                  <span>Avg Stability</span>
+                  <strong className="text-purple-600 text-lg">{analytics?.averageStability || '0.00'}</strong>
+               </div>
+               <div className="flex flex-col">
+                  <span>Upcoming</span>
+                  <strong className="text-purple-600 text-lg">{analytics?.upcomingReviews || 0}</strong>
+               </div>
+            </div>
 
             <div className="h-48 w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -136,8 +173,31 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-between mt-4 text-sm font-medium text-gray-500">
-              <span>Current: <strong className="text-purple-600">92%</strong></span>
-              <span>Goal: <strong className="text-gray-800">95%</strong></span>
+              <span className="text-xs text-gray-400 text-center w-full">Projected Ebbinghaus Forgetting Curve</span>
+            </div>
+          </div>
+
+          {/* XP History Chart */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm mt-6">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Flame className="w-5 h-5 text-orange-500" />
+              XP History
+            </h3>
+            <div className="h-40 w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={xpHistory}>
+                  <defs>
+                    <linearGradient id="colorXp" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                  <Area type="monotone" dataKey="xp" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorXp)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 

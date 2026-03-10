@@ -2,11 +2,73 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CourseGraphOutput } from '../ai/agents/course-builder.agent';
 
+import { Response } from 'express';
+
 @Injectable()
 export class CourseService {
   private readonly logger = new Logger(CourseService.name);
 
+  // MVP SSE Connection Manager
+  private sseClients = new Map<string, Response>();
+
   constructor(private prisma: PrismaService) {}
+
+  subscribeToProgress(deckId: string, res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    this.sseClients.set(deckId, res);
+
+    res.on('close', () => {
+       this.sseClients.delete(deckId);
+    });
+
+    // Send initial connection message
+    this.sendSseEvent(deckId, 'CONNECTED', 'Stream established.');
+  }
+
+  private sendSseEvent(deckId: string, event: string, data: any) {
+     const client = this.sseClients.get(deckId);
+     if (client) {
+        client.write(`event: ${event}\n`);
+        client.write(`data: ${JSON.stringify(data)}\n\n`);
+     }
+  }
+
+  async processCourseGenerationAsync(
+    deckId: string,
+    text: string,
+    isDeepResearch: boolean | undefined,
+    customConfig: any,
+    aiService: any
+  ) {
+    try {
+       this.sendSseEvent(deckId, 'PROGRESS', { message: 'Agent initialized. Starting background processing...', progress: 10 });
+
+       const graphOutput = await aiService.getCourseBuilderAgent(customConfig).process({
+          text,
+          isDeepResearch
+       }, (progressMsg: string) => {
+          // Stream AI reasoning progress
+          this.sendSseEvent(deckId, 'PROGRESS', { message: progressMsg, progress: 50 });
+       });
+
+       this.sendSseEvent(deckId, 'PROGRESS', { message: 'Saving graph to database...', progress: 90 });
+       await this.saveCourseGraph(deckId, graphOutput);
+
+       this.sendSseEvent(deckId, 'COMPLETE', { message: 'Done!' });
+    } catch (error: any) {
+       this.logger.error('Failed async course generation', error);
+       this.sendSseEvent(deckId, 'ERROR', { message: error.message || 'Generation failed' });
+    } finally {
+       // Optional: close the connection from server side
+       const client = this.sseClients.get(deckId);
+       if (client) {
+          client.end();
+          this.sseClients.delete(deckId);
+       }
+    }
+  }
 
   /**
    * Saves the generated Course Graph (Nodes, Edges, MicroLessons) to the database.

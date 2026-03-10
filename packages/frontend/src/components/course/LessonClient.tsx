@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ArrowRight, Brain, Lightbulb, PenTool, Sparkles, AlertCircle } from 'lucide-react';
 import Confetti from 'react-confetti';
 import SocraticTutor from '@/components/chat/SocraticTutor';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 export default function LessonClient() {
   const router = useRouter();
@@ -43,10 +47,22 @@ export default function LessonClient() {
       // Completed practice!
       setCompleted(true);
       try {
+        // Complete Node
         await fetch(`${apiEndpoint}/course/complete-node/demo-user-id/${nodeId}`, { method: 'POST' });
-        // Award XP logic here if connected to userStore
+
+        // Trigger Socrates-7 Session End (Diary & Affinity)
+        await fetch(`${apiEndpoint}/affinity/session-end/demo-user-id`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+              personaId: 'Socrates', // Hardcoded default for MVP, can be dynamic based on user selection
+              context: lessonData.node.name,
+              performance: 'excellent' // Could be dynamically evaluated based on text area input
+           })
+        });
+
       } catch (e) {
-        console.error("Failed to mark complete", e);
+        console.error("Failed to process completion", e);
       }
       setTimeout(() => {
         router.push(`/course?deckId=${deckId}`);
@@ -93,9 +109,15 @@ export default function LessonClient() {
                  {stepsInfo[step].icon}
               </div>
               <h2 className="text-3xl font-extrabold text-gray-800 mb-8">{stepsInfo[step].title}</h2>
-              <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                {stepsInfo[step].content}
-              </p>
+
+              <div className="text-xl text-gray-600 leading-relaxed max-w-lg prose prose-lg prose-indigo mx-auto text-left react-markdown">
+                <ReactMarkdown
+                   remarkPlugins={[remarkMath]}
+                   rehypePlugins={[rehypeKatex]}
+                >
+                   {stepsInfo[step].content}
+                </ReactMarkdown>
+              </div>
 
               {/* Practice Mock Input */}
               {step === 2 && (
