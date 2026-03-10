@@ -7,7 +7,13 @@
     "packages/*"
   ],
   "scripts": {
+    "clean": "npm run clean --workspaces --if-present",
+    "prebuild": "npm install",
     "build": "npm run build --workspaces --if-present",
+    "build:backend": "npm run build --workspace=packages/backend",
+    "build:frontend": "npm run build --workspace=packages/frontend",
+    "dev": "npm run dev --workspace=packages/frontend",
+    "start:backend": "npm run start --workspace=packages/backend",
     "test": "npm test --workspace"
   }
 }

@@ -81,11 +81,12 @@ export const useDeckStore = create<DeckState>()(
         return { cards: updatedCards };
       }),
 
-      getDueCards: (deckId) => {
+      getDueCards: (deckId?: string) => {
         const { cards } = get();
         const now = new Date();
 
-        return cards.filter(card => {
+        // 1. Filter phase
+        const dueCards = cards.filter(card => {
           if (deckId && card.deckId !== deckId) return false;
 
           // If the card is due (due date is in the past) or it's a new card
@@ -93,7 +94,32 @@ export const useDeckStore = create<DeckState>()(
           const isNew = card.fsrsCard.state === State.New;
 
           return isDue || isNew;
-        }).sort((a, b) => new Date(a.fsrsCard.due).getTime() - new Date(b.fsrsCard.due).getTime());
+        });
+
+        // 2. Sorting & Interleaving phase (FSRS optimization)
+        return dueCards.sort((a, b) => {
+           // If global review, shuffle randomly to force interleaving (context shifting)
+           if (!deckId) {
+              return Math.random() - 0.5;
+           }
+
+           // If specific deck, prioritize learning/relearning over review/new, then sort by due date
+           const statePriority: Record<number, number> = {
+              [State.Relearning]: 0,
+              [State.Learning]: 1,
+              [State.Review]: 2,
+              [State.New]: 3
+           };
+           const priorityA = statePriority[a.fsrsCard.state] ?? 4;
+           const priorityB = statePriority[b.fsrsCard.state] ?? 4;
+
+           if (priorityA !== priorityB) {
+              return priorityA - priorityB;
+           }
+
+           // If states are same, sort by due date (most overdue first)
+           return new Date(a.fsrsCard.due).getTime() - new Date(b.fsrsCard.due).getTime();
+        });
       },
 
       fetchCloudDueCards: async () => {
