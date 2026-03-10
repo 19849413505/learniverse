@@ -5,6 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "start": "node dist/main.js",
+    "prebuild": "npx prisma generate",
     "build": "tsc",
     "watch": "tsc -w"
   },
