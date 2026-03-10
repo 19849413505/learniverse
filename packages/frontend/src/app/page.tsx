@@ -5,10 +5,16 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { BookOpen, BrainCircuit, Target, CheckCircle2, Flame, Network, Activity, Star } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
+import { useShallow } from 'zustand/react/shallow';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 export default function DashboardPage() {
-  const { xp, streak, gems } = useUserStore();
+  // ⚡ Bolt: Prevent unnecessary Dashboard re-renders when unrelated user states (like lastActiveDate) change
+  const { xp, streak, gems } = useUserStore(useShallow((state) => ({
+    xp: state.xp,
+    streak: state.streak,
+    gems: state.gems
+  })));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
