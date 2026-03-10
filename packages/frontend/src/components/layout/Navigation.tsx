@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Map, Trophy, Network, User, Settings } from 'lucide-react';
+import { BookOpen, Map, Trophy, Network, User, Settings, GraduationCap } from 'lucide-react';
 import clsx from 'clsx';
 
 const navItems = [
   { name: 'Learn', href: '/', icon: Map },
   { name: 'Library', href: '/library', icon: BookOpen },
+  { name: 'Course', href: '/courses', icon: GraduationCap },
   { name: 'Knowledge', href: '/knowledge', icon: Network },
   { name: 'League', href: '/league', icon: Trophy },
   { name: 'Profile', href: '/profile', icon: User },
