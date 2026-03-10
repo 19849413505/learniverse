@@ -1,5 +1,6 @@
 "use client";
 
+
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Brain, Check, Flame, AlertCircle, X, Sparkles, Trophy } from 'lucide-react';
@@ -64,28 +65,9 @@ export default function StudyPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!mounted || isFetchingCloud) {
-    return null;
-  }
-
-  if (dueCards.length === 0 && !isFinished) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[70vh] space-y-6">
-        <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center">
-          <Check className="w-12 h-12" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900">You&apos;re all caught up!</h2>
-        <p className="text-gray-500 text-lg">You&apos;ve mastered all due cards for today.</p>
-        <Link href="/" className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition">
-          Return to Dashboard
-        </Link>
-      </div>
-    );
-  }
-
-  const handleFlip = () => {
+  const handleFlip = useCallback(() => {
     setIsFlipped(true);
-  };
+  }, []);
 
   const handleFinish = useCallback(() => {
     setIsFinished(true);
@@ -94,6 +76,7 @@ export default function StudyPage() {
     setTimeout(() => setShowConfetti(false), 5000);
   }, [incrementStreak]);
 
+  
   // ⚡ Bolt: Use useCallback to preserve referential equality of handleRate
   // This prevents the memoized RatingButton components from re-rendering
   // when unrelated states change in the parent component.
@@ -254,9 +237,11 @@ export default function StudyPage() {
         {!isFlipped ? (
           <button
             onClick={handleFlip}
-            className="w-full sm:w-1/2 py-5 bg-indigo-600 text-white rounded-2xl font-extrabold text-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition hover:-translate-y-1"
+            className="w-full sm:w-1/2 py-5 bg-indigo-600 text-white rounded-2xl font-extrabold text-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-indigo-300 flex flex-col items-center justify-center gap-1"
+            aria-label="Reveal Answer"
           >
-            Reveal Answer
+            <span>Reveal Answer</span>
+            <span className="text-xs font-medium text-indigo-200 hidden sm:inline-block">Press Space to reveal</span>
           </button>
         ) : (
           <div className="w-full grid grid-cols-4 gap-2 sm:gap-4">
@@ -264,6 +249,7 @@ export default function StudyPage() {
               rating={Rating.Again}
               label="Again"
               sub="< 1m"
+              shortcut="1"
               color="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200 hover:border-rose-300"
               onRate={handleRate}
             />
@@ -271,6 +257,7 @@ export default function StudyPage() {
               rating={Rating.Hard}
               label="Hard"
               sub="5m"
+              shortcut="2"
               color="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 hover:border-orange-300"
               onRate={handleRate}
             />
@@ -278,6 +265,7 @@ export default function StudyPage() {
               rating={Rating.Good}
               label="Good"
               sub="1d"
+              shortcut="3"
               color="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:border-green-300"
               onRate={handleRate}
             />
@@ -285,6 +273,7 @@ export default function StudyPage() {
               rating={Rating.Easy}
               label="Easy"
               sub="4d"
+              shortcut="4"
               color="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300"
               onRate={handleRate}
             />
@@ -305,6 +294,11 @@ const RatingButton = memo(function RatingButton({ rating, label, sub, color, onR
     >
       <span className="font-bold text-sm sm:text-base">{label}</span>
       <span className="text-[10px] sm:text-xs opacity-80 mt-1 font-medium">{sub}</span>
+      {shortcut && (
+        <span className="hidden sm:flex absolute top-1 right-2 text-[10px] font-bold opacity-50 px-1.5 py-0.5 rounded-md bg-white/50">
+          [{shortcut}]
+        </span>
+      )}
     </button>
   );
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ArrowRight, Brain, Lightbulb, PenTool, Sparkles, AlertCircle } from 'lucide-react';
@@ -34,9 +34,7 @@ export default function LessonClient() {
       });
   }, [nodeId, deckId, apiEndpoint]);
 
-  if (!lessonData) return <div className="flex h-screen items-center justify-center font-bold text-gray-500">Loading Micro-Lesson...</div>;
-
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (step < 2) {
       setStep(prev => prev + 1);
     } else {
@@ -52,7 +50,27 @@ export default function LessonClient() {
         router.push(`/course?deckId=${deckId}`);
       }, 4000);
     }
-  };
+  }, [step, apiEndpoint, nodeId, deckId, router]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement || (activeElement as HTMLElement)?.isContentEditable;
+
+      // Prevent shortcut if a modal is open, text is being edited, or lesson is completed
+      if (isChatOpen || isInputFocused || completed) return;
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, isChatOpen, completed]);
+
+  if (!lessonData) return <div className="flex h-screen items-center justify-center font-bold text-gray-500">Loading Micro-Lesson...</div>;
 
   const stepsInfo = [
     { title: "概念讲解 (Explanation)", icon: <Brain className="w-8 h-8 text-indigo-500" />, content: lessonData.micro.explanation },
@@ -126,13 +144,21 @@ export default function LessonClient() {
 
         {/* Floating Help Button */}
         {!completed && (
-           <button
+           <motion.button
              onClick={() => setIsChatOpen(true)}
-             className="absolute -right-16 top-1/2 -translate-y-1/2 bg-white p-4 rounded-full shadow-xl border border-indigo-100 text-indigo-500 hover:text-white hover:bg-indigo-500 transition-all group flex flex-col items-center gap-1"
+             initial={{ scale: 0.9, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1, y: [0, -8, 0] }}
+             transition={{
+               y: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+               opacity: { duration: 0.5 }
+             }}
+             className="absolute -right-16 top-1/2 -translate-y-1/2 bg-white p-4 rounded-full shadow-xl border border-indigo-100 text-indigo-500 hover:text-white hover:bg-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 transition-all group flex flex-col items-center gap-1 active:scale-95 outline-none"
+             aria-label="Ask Socratic Tutor for help"
+             title="Ask Socratic Tutor"
            >
              <Sparkles className="w-6 h-6" />
-             <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">Ask Tutor</span>
-           </button>
+             <span className="text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 whitespace-nowrap">Ask Tutor</span>
+           </motion.button>
         )}
       </div>
 
@@ -148,11 +174,17 @@ export default function LessonClient() {
             ) : <div />}
             <button
               onClick={handleNext}
-              className={`px-12 py-4 rounded-2xl font-extrabold text-xl shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center gap-2
-                ${step === 2 ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}
+              className={`relative px-12 py-4 rounded-2xl font-extrabold text-xl shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center gap-2 focus-visible:ring-4 focus-visible:ring-offset-2 outline-none
+                ${step === 2 ? 'bg-emerald-500 hover:bg-emerald-600 focus-visible:ring-emerald-300 shadow-emerald-200 text-white' : 'bg-indigo-600 hover:bg-indigo-700 focus-visible:ring-indigo-300 text-white'}
               `}
+              aria-label={step === 2 ? 'Check your answer' : 'Continue to next step'}
             >
-              {step === 2 ? 'CHECK ANSWER' : 'CONTINUE'} <ArrowRight className="w-6 h-6" />
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2">
+                  {step === 2 ? 'CHECK ANSWER' : 'CONTINUE'} <ArrowRight className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-medium opacity-75 mt-0.5 hidden sm:block uppercase tracking-wider">Press Enter</span>
+              </div>
             </button>
           </div>
         </div>

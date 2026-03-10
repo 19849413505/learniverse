@@ -30,21 +30,24 @@ model User {
 // Knowledge Graph & Math Academy Course Structures
 
 model KnowledgeNode {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  deckId      String?  // Group nodes into courses/decks
+  id               String   @id @default(uuid())
+  name             String
+  description      String?
+  deckId           String?  // Group nodes into courses/decks
+  difficultyLevel  String?  // 'memory', 'understanding', 'application'
+  roleplayHook     String?  // Tying back to Socrates-7 character context
 
   // Relations
-  microLessons MicroLesson[]
+  microLessons     MicroLesson[]
+  diagnosticTests  DiagnosticQuestion[]
 
   // A node can have many prerequisites (edges where this node is the target)
-  prerequisites KnowledgeEdge[] @relation("TargetNode")
+  prerequisites    KnowledgeEdge[] @relation("TargetNode")
 
   // A node can be a prerequisite for many other nodes (edges where this node is the source)
-  dependents    KnowledgeEdge[] @relation("SourceNode")
+  dependents       KnowledgeEdge[] @relation("SourceNode")
 
-  progress      NodeProgress[]
+  progress         NodeProgress[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -69,9 +72,24 @@ model MicroLesson {
   id          String   @id @default(uuid())
   nodeId      String
 
-  explanation String   // 最小有效讲解 (Micro-lesson)
-  example     String   // 示例引导 (Worked Example)
-  practice    String   // 即时练习 (Active Practice / Question)
+  // Old fields kept for MVP compatibility, ideally we migrate fully to `steps`
+  explanation String?  // 最小有效讲解 (Micro-lesson)
+  example     String?  // 示例引导 (Worked Example)
+  practice    String?  // 即时练习 (Active Practice / Question)
+
+  // JSON field to store dynamic scaffolding steps
+  steps       Json?
+
+  node        KnowledgeNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+}
+
+model DiagnosticQuestion {
+  id          String   @id @default(uuid())
+  nodeId      String   // the central hub node it tests
+  question    String
+  answer      String
 
   node        KnowledgeNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
 

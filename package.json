@@ -7,7 +7,13 @@
     "packages/*"
   ],
   "scripts": {
+    "clean": "npm run clean --workspaces --if-present",
+    "prebuild": "npm install",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm test --workspace"
+    "test": "npm test --workspace",
+    "build:desktop": "npm run build && npm run build:desktop --workspace=packages/desktop",
+    "build:win": "npm run build && npm run build:win --workspace=packages/desktop",
+    "build:mac": "npm run build && npm run build:mac --workspace=packages/desktop",
+    "build:linux": "npm run build && npm run build:linux --workspace=packages/desktop"
   }
 }
