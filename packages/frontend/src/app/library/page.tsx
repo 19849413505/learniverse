@@ -3,6 +3,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, Database, Copy, CheckCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 export default function LibraryPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -104,7 +108,7 @@ export default function LibraryPage() {
           Library & Document OCR
         </h1>
         <p className="text-gray-500 text-lg">
-          Upload images (PNG, JPG) for OCR, or PDF/TXT files to extract text. You can then copy the text to generate knowledge graphs.
+          Upload images (PNG, JPG) for OCR, or PDF/EPUB/TXT files to extract text and markdown. You can then copy the text to generate knowledge graphs.
         </p>
       </div>
 
@@ -119,14 +123,14 @@ export default function LibraryPage() {
           <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 relative hover:bg-gray-100 transition">
              <input
                type="file"
-               accept="image/*,.pdf,.txt"
+               accept="image/*,.pdf,.txt,.epub"
                onChange={handleFileChange}
                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
              />
              <div className="flex flex-col items-center text-gray-500">
                <UploadCloud className="w-12 h-12 mb-2 text-indigo-400" />
                <span className="font-medium text-lg">Drag & Drop or Click to Browse</span>
-               <span className="text-sm mt-1 text-gray-400">Supports PDF, PNG, JPG, TXT</span>
+               <span className="text-sm mt-1 text-gray-400">Supports PDF, EPUB, PNG, JPG, TXT</span>
              </div>
           </div>
 
@@ -192,7 +196,14 @@ export default function LibraryPage() {
 
            <div className="flex-1 w-full bg-gray-800 rounded-2xl p-4 text-gray-300 overflow-auto border border-gray-700 custom-scrollbar">
              {extractedText ? (
-                <pre className="whitespace-pre-wrap font-sans text-sm">{extractedText}</pre>
+                <div className="prose prose-invert max-w-none text-sm">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
+                    {extractedText}
+                  </ReactMarkdown>
+                </div>
              ) : (
                 <div className="h-full flex items-center justify-center text-gray-500 flex-col gap-2">
                    <FileText className="w-12 h-12 opacity-20" />
