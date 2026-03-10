@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Sparkles, FileText, CheckCircle, Database, Network } from 'lucide-react';
+import { UploadCloud, Sparkles, FileText, CheckCircle, Database, Network, Link as LinkIcon, File } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 import { useDeckStore } from '@/store/deckStore';
+import { processFile, parseWebpage, SupportedImportFormat } from '@/lib/importers';
 import { createEmptyCard } from 'ts-fsrs';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -13,10 +14,13 @@ import { useSettingsStore } from '@/store/settingsStore';
 export default function KnowledgeBasePage() {
   const router = useRouter();
   const { addDeck, addCards } = useDeckStore();
-  const { apiKey, baseURL, model } = useSettingsStore();
+  const { apiKey, baseURL, model, ocrEngine, ocrModel } = useSettingsStore();
 
   const [fileTexts, setFileTexts] = useState<string[]>(['']);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [webpageUrl, setWebpageUrl] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processingStage, setProcessingStage] = useState('Idle');
 
@@ -55,6 +59,51 @@ export default function KnowledgeBasePage() {
   const [topicName, setTopicName] = useState('');
 
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setProcessingStage(`Importing ${file.name}...`);
+    try {
+      const doc = await processFile(
+        file,
+        (msg, prog) => {
+          setProcessingStage(msg);
+        },
+        { engine: ocrEngine || 'tesseract', key: apiKey, baseUrl: baseURL, model: ocrModel || 'gpt-4o' }
+      );
+
+      const newTexts = [...fileTexts];
+      newTexts[index] = `[Imported: ${doc.title} (${doc.sourceType})]\n\n${doc.content}`;
+      setFileTexts(newTexts);
+    } catch (err: any) {
+      alert(`Failed to import file: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+      setProcessingStage('Idle');
+    }
+  };
+
+  const handleWebpageImport = async (index: number) => {
+    if (!webpageUrl) return;
+    setIsImporting(true);
+    setProcessingStage(`Fetching ${webpageUrl}...`);
+    try {
+      const doc = await parseWebpage(webpageUrl);
+      const newTexts = [...fileTexts];
+      newTexts[index] = `[Imported Webpage: ${doc.title}]\n\n${doc.content}`;
+      setFileTexts(newTexts);
+      setShowUrlInput(false);
+      setWebpageUrl('');
+    } catch (err: any) {
+      alert(`Failed to import webpage: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+      setProcessingStage('Idle');
+    }
+  };
 
   const handleProcess = async () => {
     const combinedText = fileTexts.filter(t => t.trim().length > 0).join('\n\n---\n\n');
@@ -242,28 +291,68 @@ export default function KnowledgeBasePage() {
              </div>
           )}
 
-          <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto pb-4 pr-2">
             {fileTexts.map((text, idx) => (
+              <div key={idx} className="flex flex-col gap-2 p-2 bg-gray-50 border border-gray-200 rounded-2xl">
+                <div className="flex items-center justify-between w-full px-2 pt-2">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Document {idx + 1}</span>
+                  <div className="flex gap-2">
+                    <label className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 p-1.5 rounded-md cursor-pointer shadow-sm border border-indigo-200 transition-colors flex items-center gap-1" title="Upload File (Word, Excel, PDF, Image, MD)">
+                      <File className="w-3.5 h-3.5" />
+                      <span className="text-xs font-semibold">Upload File</span>
+                      <input type="file" className="hidden" accept=".md,.txt,.docx,.xlsx,.xls,.csv,.pdf,image/*" onChange={(e) => handleFileUpload(e, idx)} disabled={isProcessing || isImporting || showGraph} />
+                    </label>
+                    <button
+                      onClick={() => setShowUrlInput(!showUrlInput)}
+                      className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 p-1.5 rounded-md cursor-pointer shadow-sm border border-emerald-200 transition-colors flex items-center gap-1"
+                      title="Import from Webpage"
+                      disabled={isProcessing || isImporting || showGraph}
+                    >
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      <span className="text-xs font-semibold">From URL</span>
+                    </button>
+                  </div>
+                </div>
+
+                {showUrlInput && (
+                  <div className="flex gap-2 bg-emerald-50 p-2 rounded-xl border border-emerald-100 mx-2">
+                    <input
+                      type="url"
+                      placeholder="https://example.com/article"
+                      className="flex-1 bg-white border border-emerald-200 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={webpageUrl}
+                      onChange={e => setWebpageUrl(e.target.value)}
+                    />
+                    <button
+                      onClick={() => handleWebpageImport(idx)}
+                      className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                      disabled={isImporting || !webpageUrl}
+                    >
+                      {isImporting ? 'Fetching...' : 'Fetch'}
+                    </button>
+                  </div>
+                )}
+
                <textarea
-                 key={idx}
-                 className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow min-h-[150px]"
-                 placeholder={isMimicMode ? `Document ${idx + 1} - Paste knowledge material...` : `Document ${idx + 1} - Paste syllabus, article, or book chapter here...`}
+                 className="w-full bg-transparent p-2 px-3 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow min-h-[120px]"
+                 placeholder={isMimicMode ? `Paste knowledge material or upload a file...` : `Paste syllabus, article, book chapter or upload a file...`}
                  value={text}
                  onChange={(e) => {
                     const newTexts = [...fileTexts];
                     newTexts[idx] = e.target.value;
                     setFileTexts(newTexts);
                  }}
-                 disabled={isProcessing || showGraph}
+                 disabled={isProcessing || isImporting || showGraph}
                />
+              </div>
             ))}
             {fileTexts.length < 5 && (
                <button
                   onClick={() => setFileTexts([...fileTexts, ''])}
-                  className="text-indigo-600 text-sm font-bold mt-2 hover:underline self-start"
-                  disabled={isProcessing || showGraph}
+                  className="text-indigo-600 text-sm font-bold hover:underline self-start bg-indigo-50 px-3 py-2 rounded-lg border border-indigo-100 mt-2"
+                  disabled={isProcessing || isImporting || showGraph}
                >
-                  + Add another document
+                  + Add another document source
                </button>
             )}
           </div>
@@ -309,7 +398,7 @@ export default function KnowledgeBasePage() {
           </AnimatePresence>
 
           <AnimatePresence>
-            {isProcessing && !showGraph && (
+            {(isProcessing || isImporting) && !showGraph && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

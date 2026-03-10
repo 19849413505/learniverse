@@ -21,13 +21,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         }
     }
 
-    super({
-      datasources: {
-        db: {
-          url: databaseUrl,
+    if (databaseUrl) {
+      super({
+        datasources: {
+          db: {
+            url: databaseUrl,
+          },
         },
-      },
-    });
+      });
+    } else {
+      super(); // Rely on schema.prisma default (e.g. env("DATABASE_URL") or hardcoded default)
+    }
   }
 
   async onModuleInit() {
