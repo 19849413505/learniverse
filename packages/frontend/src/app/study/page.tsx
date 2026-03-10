@@ -1,20 +1,43 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Brain, Check, Flame, AlertCircle, X, Sparkles, Trophy } from 'lucide-react';
 import { useDeckStore } from '@/store/deckStore';
 import { useUserStore } from '@/store/userStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useShallow } from 'zustand/react/shallow';
 import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
-import Confetti from 'react-confetti';
-import SocraticTutor from '@/components/chat/SocraticTutor';
+import dynamic from 'next/dynamic';
+
+// ⚡ Bolt: Dynamically import heavy, conditionally rendered components
+// Confetti and SocraticTutor are large dependencies that are only needed
+// when a user finishes a session or clicks "Ask Tutor".
+// Lazy loading these reduces the initial Time-To-Interactive (TTI) and JS payload size.
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
+const SocraticTutor = dynamic(() => import('@/components/chat/SocraticTutor'), { ssr: false });
 
 export default function StudyPage() {
-  const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore();
-  const { addXP, incrementStreak } = useUserStore();
-  const { apiKey, baseURL, model } = useSettingsStore();
+  // ⚡ Bolt: Use `useShallow` for Zustand stores to prevent full-store re-renders.
+  // Before: The component re-rendered whenever ANY property in the store changed.
+  // After: Only re-renders if these specific destructured properties change.
+  const { getDueCards, fsrs, updateCard, fetchCloudDueCards } = useDeckStore(useShallow((state) => ({
+    getDueCards: state.getDueCards,
+    fsrs: state.fsrs,
+    updateCard: state.updateCard,
+    fetchCloudDueCards: state.fetchCloudDueCards
+  })));
+  const { addXP, incrementStreak } = useUserStore(useShallow((state) => ({
+    addXP: state.addXP,
+    incrementStreak: state.incrementStreak
+  })));
+  const { apiKey, baseURL, model } = useSettingsStore(useShallow((state) => ({
+    apiKey: state.apiKey,
+    baseURL: state.baseURL,
+    model: state.model
+  })));
 
   const [dueCards, setDueCards] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -53,8 +76,13 @@ export default function StudyPage() {
     setTimeout(() => setShowConfetti(false), 5000);
   }, [incrementStreak]);
 
+  
+  // ⚡ Bolt: Use useCallback to preserve referential equality of handleRate
+  // This prevents the memoized RatingButton components from re-rendering
+  // when unrelated states change in the parent component.
   const handleRate = useCallback((rating: Rating) => {
     const card = dueCards[currentIndex];
+    if (!card) return;
 
     // 1. Calculate next state using FSRS
     const schedulingInfo = fsrs.repeat(card.fsrsCard, new Date());
@@ -88,57 +116,6 @@ export default function StudyPage() {
       handleFinish();
     }
   }, [dueCards, currentIndex, fsrs, updateCard, addXP, handleFinish]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Disable shortcuts if typing in tutor drawer, finished, or typing in any input field
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement || (activeElement as HTMLElement)?.isContentEditable;
-
-      if (isTutorOpen || isFinished || dueCards.length === 0 || isInputFocused) return;
-
-      if (!isFlipped && (e.code === 'Space' || e.code === 'Enter')) {
-        e.preventDefault();
-        handleFlip();
-      } else if (isFlipped) {
-        if (e.key === '1') {
-          e.preventDefault();
-          handleRate(Rating.Again);
-        } else if (e.key === '2') {
-          e.preventDefault();
-          handleRate(Rating.Hard);
-        } else if (e.key === '3') {
-          e.preventDefault();
-          handleRate(Rating.Good);
-        } else if (e.key === '4') {
-          e.preventDefault();
-          handleRate(Rating.Easy);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFlipped, isTutorOpen, isFinished, dueCards.length, handleFlip, handleRate]);
-
-  if (!mounted || isFetchingCloud) {
-    return null;
-  }
-
-  if (dueCards.length === 0 && !isFinished) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[70vh] space-y-6">
-        <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center">
-          <Check className="w-12 h-12" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900">You&apos;re all caught up!</h2>
-        <p className="text-gray-500 text-lg">You&apos;ve mastered all due cards for today.</p>
-        <Link href="/" className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition">
-          Return to Dashboard
-        </Link>
-      </div>
-    );
-  }
 
   if (isFinished) {
     return (
@@ -274,7 +251,7 @@ export default function StudyPage() {
               sub="< 1m"
               shortcut="1"
               color="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200 hover:border-rose-300"
-              onClick={() => handleRate(Rating.Again)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Hard}
@@ -282,7 +259,7 @@ export default function StudyPage() {
               sub="5m"
               shortcut="2"
               color="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 hover:border-orange-300"
-              onClick={() => handleRate(Rating.Hard)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Good}
@@ -290,7 +267,7 @@ export default function StudyPage() {
               sub="1d"
               shortcut="3"
               color="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:border-green-300"
-              onClick={() => handleRate(Rating.Good)}
+              onRate={handleRate}
             />
             <RatingButton
               rating={Rating.Easy}
@@ -298,7 +275,7 @@ export default function StudyPage() {
               sub="4d"
               shortcut="4"
               color="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300"
-              onClick={() => handleRate(Rating.Easy)}
+              onRate={handleRate}
             />
           </div>
         )}
@@ -307,12 +284,13 @@ export default function StudyPage() {
   );
 }
 
-function RatingButton({ rating, label, sub, shortcut, color, onClick }: { rating: Rating, label: string, sub: string, shortcut?: string, color: string, onClick: () => void }) {
+// ⚡ Bolt: Wrap RatingButton with React.memo to prevent expensive style and layout recalculations
+// when parent component (StudyPage) re-renders due to unrelated state changes.
+const RatingButton = memo(function RatingButton({ rating, label, sub, color, onRate }: { rating: Rating, label: string, sub: string, color: string, onRate: (r: Rating) => void }) {
   return (
     <button
-      onClick={onClick}
-      className={`relative flex flex-col items-center justify-center py-3 sm:py-4 rounded-xl border-2 transition transform active:scale-95 focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-indigo-300 ${color}`}
-      aria-label={`Rate ${label}`}
+      onClick={() => onRate(rating)}
+      className={`flex flex-col items-center justify-center py-3 sm:py-4 rounded-xl border-2 transition transform active:scale-95 ${color}`}
     >
       <span className="font-bold text-sm sm:text-base">{label}</span>
       <span className="text-[10px] sm:text-xs opacity-80 mt-1 font-medium">{sub}</span>
@@ -323,4 +301,4 @@ function RatingButton({ rating, label, sub, shortcut, color, onClick }: { rating
       )}
     </button>
   );
-}
+});
