@@ -4,3 +4,6 @@
 ## 2024-03-10 - Visualizing Progress in Multi-step Modals
 **Learning:** Adding a smooth, animated progress bar (via Framer Motion) to a multi-step modal (like a diagnostic test) dramatically reduces perceived friction. Coupled with keyboard shortcuts (Arrow keys for binary choices), it transforms a tedious form into a fast, fluid, gamified interaction.
 **Action:** When designing wizards or multi-step questions, always include a visual progress indicator and map binary/multiple-choice actions to intuitive keyboard keys (arrows, 1-4) with clear on-screen hints.
+## 2024-03-10 - Animating Primary Action Calls
+**Learning:** Adding subtle breathing animations (`y: [0, -8, 0]`) to floating action buttons (like "Ask Tutor") effectively draws the user's eye without being obtrusive. Pairing this with `Enter` key support for primary form/step progression reduces friction. However, extreme care must be taken in React to avoid violating hook rules when adding these listeners.
+**Action:** When adding global event listeners via `useEffect`, ensure they are placed *above* any early returns that wait for data loading.
