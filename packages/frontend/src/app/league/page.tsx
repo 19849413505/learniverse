@@ -7,7 +7,8 @@ import { Trophy, Medal, Star, ChevronUp, Flame, Users } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 
 export default function LeaguePage() {
-  const { xp } = useUserStore();
+  // ⚡ Bolt: Prevent full re-renders on unrelated user store changes by using an atomic selector
+  const xp = useUserStore((state) => state.xp);
 
   // Mock leaderboard data
   const [leaderboard] = useState([

@@ -9,11 +9,22 @@ import { useDeckStore } from '@/store/deckStore';
 import { createEmptyCard } from 'ts-fsrs';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function KnowledgeBasePage() {
   const router = useRouter();
-  const { addDeck, addCards } = useDeckStore();
-  const { apiKey, baseURL, model } = useSettingsStore();
+
+  // ⚡ Bolt: Use `useShallow` to prevent full re-renders on unrelated store changes.
+  const { addDeck, addCards } = useDeckStore(useShallow((state) => ({
+    addDeck: state.addDeck,
+    addCards: state.addCards
+  })));
+
+  const { apiKey, baseURL, model } = useSettingsStore(useShallow((state) => ({
+    apiKey: state.apiKey,
+    baseURL: state.baseURL,
+    model: state.model
+  })));
 
   const [fileText, setFileText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);

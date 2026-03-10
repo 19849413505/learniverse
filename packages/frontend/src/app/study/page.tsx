@@ -336,10 +336,10 @@ export default function StudyPage() {
 }
 
 
-function RatingButton({ rating, label, sub, shortcut, color, onClick }: { rating: Rating, label: string, sub: string, shortcut?: string, color: string, onClick: () => void }) {
+function RatingButton({ rating, label, sub, shortcut, color, onRate }: { rating: Rating, label: string, sub: string, shortcut?: string, color: string, onRate: (rating: Rating) => void }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => onRate(rating)}
       className={`relative flex flex-col items-center justify-center py-3 sm:py-4 rounded-xl border-2 transition transform active:scale-95 focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-indigo-300 ${color}`}
       aria-label={`Rate ${label}`}
     >
@@ -352,4 +352,4 @@ function RatingButton({ rating, label, sub, shortcut, color, onClick }: { rating
       )}
     </button>
   );
-});
+}
