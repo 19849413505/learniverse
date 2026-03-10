@@ -20,16 +20,24 @@ export class CourseService {
       const nodeMap = new Map<string, string>(); // Maps original agent ID to new Database UUID
 
       for (const nodeData of graph.nodes) {
+        const steps = nodeData.microLesson?.steps || [];
+        const introStep = steps.find(s => s.step_type === 'intro');
+        const exampleStep = steps.find(s => s.step_type === 'example');
+        const practiceStep = steps.find(s => s.step_type === 'independent_practice' || s.step_type === 'guided_practice');
+
         const createdNode = await tx.knowledgeNode.create({
           data: {
             name: nodeData.name,
             description: nodeData.description,
             deckId: deckId,
+            difficultyLevel: nodeData.difficulty_level,
+            roleplayHook: nodeData.roleplay_hook,
             microLessons: {
               create: {
-                explanation: nodeData.microLesson.explanation,
-                example: nodeData.microLesson.example,
-                practice: nodeData.microLesson.practice,
+                explanation: introStep?.content || '',
+                example: exampleStep?.content || '',
+                practice: practiceStep?.content || '',
+                steps: nodeData.microLesson?.steps ? JSON.parse(JSON.stringify(nodeData.microLesson.steps)) : []
               }
             }
           }
@@ -37,7 +45,7 @@ export class CourseService {
         nodeMap.set(nodeData.id, createdNode.id);
       }
 
-      // 2. Create Edges (Prerequisites) based on the mapped IDs
+      // 2. Create Edges based on the mapped IDs
       for (const edge of graph.edges) {
         const sourceDbId = nodeMap.get(edge.source);
         const targetDbId = nodeMap.get(edge.target);
@@ -53,7 +61,21 @@ export class CourseService {
         }
       }
 
-      return { success: true, nodesCreated: graph.nodes.length, edgesCreated: graph.edges.length };
+      // 3. Create Diagnostic Questions
+      for (const dq of graph.diagnostic_questions || []) {
+        const targetDbId = nodeMap.get(dq.tests_node_id);
+        if (targetDbId) {
+          await tx.diagnosticQuestion.create({
+            data: {
+              nodeId: targetDbId,
+              question: dq.question,
+              answer: dq.answer
+            }
+          });
+        }
+      }
+
+      return { success: true, nodesCreated: graph.nodes.length, edgesCreated: graph.edges.length, diagnosticsCreated: (graph.diagnostic_questions || []).length };
     });
   }
 
@@ -135,12 +157,16 @@ export class CourseService {
 
      const nodesToComplete = new Set<string>();
 
+     // ⚡ Bolt: Create O(1) lookup map to prevent O(N^2) recursive traversal
+     // Converts findPrereqs operation from O(N^2) to O(N)
+     const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+
      // Recursive function to find all prerequisites
      const findPrereqs = (nodeId: string) => {
         if (nodesToComplete.has(nodeId)) return;
         nodesToComplete.add(nodeId);
 
-        const node = allNodes.find(n => n.id === nodeId);
+        const node = nodeMap.get(nodeId);
         if (node) {
            for (const prereq of node.prerequisites) {
               findPrereqs(prereq.sourceId);

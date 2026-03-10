@@ -53,6 +53,9 @@ export default function KnowledgeBasePage() {
   const [referenceFormat, setReferenceFormat] = useState('');
   const [topicName, setTopicName] = useState('');
 
+  // Tutor Workshop State
+  const [tutorPrompt, setTutorPrompt] = useState('');
+
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
   const handleProcess = async () => {
@@ -139,7 +142,8 @@ export default function KnowledgeBasePage() {
         body: JSON.stringify({
           text: fileText,
           deckId: deckId,
-          customConfig
+          customConfig,
+          tutorPrompt
         }),
       });
 
@@ -200,7 +204,7 @@ export default function KnowledgeBasePage() {
             </div>
           </div>
 
-          {isMimicMode && (
+          {isMimicMode ? (
              <div className="mb-3 space-y-3">
                <input
                  type="text"
@@ -214,6 +218,15 @@ export default function KnowledgeBasePage() {
                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm h-20 resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
                  value={referenceFormat}
                  onChange={e => setReferenceFormat(e.target.value)}
+               />
+             </div>
+          ) : (
+             <div className="mb-3 space-y-3">
+               <textarea
+                 placeholder="【创意工坊】输入特定的导师/角色扮演Prompt，例如：'请扮演星穹铁道的三月七，用活泼的语气和相机的比喻来解释知识' (可选)"
+                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm h-16 resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                 value={tutorPrompt}
+                 onChange={e => setTutorPrompt(e.target.value)}
                />
              </div>
           )}
