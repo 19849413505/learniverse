@@ -5,6 +5,7 @@ import { AiModule } from './ai/ai.module';
 import { UsersModule } from './users/users.module';
 import { CardsModule } from './cards/cards.module';
 import { CourseModule } from './course/course.module';
+import { LibraryModule } from './library/library.module';
 
 @Module({
   imports: [

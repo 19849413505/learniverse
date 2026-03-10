@@ -35,6 +35,11 @@ export class AiService {
     const defaultUrl = 'https://api.deepseek.com/v1';
     if (!url) return defaultUrl;
 
+    // Handle common missing /v1 path for DeepSeek
+    if (url === 'https://api.deepseek.com' || url === 'https://api.deepseek.com/') {
+       return defaultUrl;
+    }
+
     try {
       const parsedUrl = new URL(url);
 
@@ -69,12 +74,16 @@ export class AiService {
   private resolveCredentials(customConfig?: { apiKey?: string; baseURL?: string }) {
     const defaultUrl = 'https://api.deepseek.com/v1';
 
+    // Let's be lenient: if the user typed https://api.deepseek.com, we treat it as default too,
+    // or at least let the validateBaseUrl add the /v1 if missing.
+    let resolvedUrl = customConfig?.baseURL ? this.validateBaseUrl(customConfig.baseURL) : defaultUrl;
+
     // If the user provided a custom URL, DO NOT send our private API key to it.
     // The user MUST provide their own API key for their custom URL.
-    if (customConfig?.baseURL && customConfig.baseURL !== defaultUrl) {
+    if (resolvedUrl && resolvedUrl !== defaultUrl) {
       return {
-        apiKey: customConfig.apiKey || 'mock-key', // Local models like Ollama might not need a real key, but OpenAI client requires one.
-        baseURL: this.validateBaseUrl(customConfig.baseURL)
+        apiKey: customConfig?.apiKey || 'mock-key', // Local models like Ollama might not need a real key, but OpenAI client requires one.
+        baseURL: resolvedUrl
       };
     }
 
