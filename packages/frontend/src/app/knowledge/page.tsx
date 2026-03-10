@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Sparkles, FileText, CheckCircle, Database, Network } from 'lucide-react';
+import { UploadCloud, Sparkles, FileText, CheckCircle, Database, Network, Loader2, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false });
 import { useDeckStore } from '@/store/deckStore';
@@ -52,6 +52,9 @@ export default function KnowledgeBasePage() {
   const [isMimicMode, setIsMimicMode] = useState(false);
   const [referenceFormat, setReferenceFormat] = useState('');
   const [topicName, setTopicName] = useState('');
+
+  // Tutor Workshop State
+  const [tutorPrompt, setTutorPrompt] = useState('');
 
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
@@ -139,7 +142,8 @@ export default function KnowledgeBasePage() {
         body: JSON.stringify({
           text: fileText,
           deckId: deckId,
-          customConfig
+          customConfig,
+          tutorPrompt
         }),
       });
 
@@ -200,7 +204,7 @@ export default function KnowledgeBasePage() {
             </div>
           </div>
 
-          {isMimicMode && (
+          {isMimicMode ? (
              <div className="mb-3 space-y-3">
                <input
                  type="text"
@@ -216,28 +220,54 @@ export default function KnowledgeBasePage() {
                  onChange={e => setReferenceFormat(e.target.value)}
                />
              </div>
+          ) : (
+             <div className="mb-3 space-y-3">
+               <textarea
+                 placeholder="【创意工坊】输入特定的导师/角色扮演Prompt，例如：'请扮演星穹铁道的三月七，用活泼的语气和相机的比喻来解释知识' (可选)"
+                 className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm h-16 resize-none focus:ring-2 focus:ring-indigo-500 outline-none"
+                 value={tutorPrompt}
+                 onChange={e => setTutorPrompt(e.target.value)}
+               />
+             </div>
           )}
 
-          <textarea
-            className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
-            placeholder={isMimicMode ? "Paste the core knowledge material to test on..." : "Paste your syllabus, article, or book chapter here..."}
-            value={fileText}
-            onChange={(e) => setFileText(e.target.value)}
-            disabled={isProcessing || showGraph}
-          />
+          <div className="relative flex-1 flex flex-col">
+            <textarea
+              className="flex-1 w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 pb-10 text-gray-700 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
+              placeholder={isMimicMode ? "Paste the core knowledge material to test on..." : "Paste your syllabus, article, or book chapter here..."}
+              value={fileText}
+              onChange={(e) => setFileText(e.target.value)}
+              disabled={isProcessing || showGraph}
+              aria-label={isMimicMode ? "Core knowledge material input" : "Raw text input for knowledge graph"}
+            />
+
+            <div className="absolute bottom-3 right-3 left-3 flex justify-between items-center text-xs text-gray-400 font-medium">
+              <span>{fileText.length} characters</span>
+              {fileText.length > 0 && !isProcessing && !showGraph && (
+                <button
+                  onClick={() => setFileText('')}
+                  className="flex items-center gap-1 hover:text-rose-500 focus-visible:ring-2 focus-visible:ring-rose-500 focus:outline-none rounded px-1 transition-colors"
+                  aria-label="Clear text input"
+                >
+                  <X className="w-3 h-3" /> Clear
+                </button>
+              )}
+            </div>
+          </div>
 
           <button
             onClick={handleProcess}
             disabled={isProcessing || showGraph || !fileText.trim()}
-            className={`mt-4 w-full py-4 rounded-2xl font-bold text-lg text-white flex justify-center items-center gap-2 transition-all shadow-md
+            title={isProcessing ? "AI is analyzing your text..." : (!fileText.trim() ? "Please enter text to generate" : "Start generation")}
+            className={`mt-4 w-full py-4 rounded-2xl font-bold text-lg text-white flex justify-center items-center gap-2 transition-all shadow-md focus-visible:ring-4 focus-visible:ring-indigo-300 outline-none
               ${(isProcessing || showGraph || !fileText.trim())
                 ? 'bg-gray-300 cursor-not-allowed shadow-none'
-                : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg hover:-translate-y-1'
+                : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg active:scale-95'
               }`}
           >
             {isProcessing ? (
-              <span className="animate-pulse flex items-center gap-2">
-                <Database className="w-5 h-5 animate-spin" /> Processing...
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> {processingStage}...
               </span>
             ) : showGraph ? (
               <span className="flex items-center gap-2">
@@ -297,7 +327,9 @@ export default function KnowledgeBasePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1 }}
-              className="absolute inset-0 w-full h-full"
+              className="absolute inset-0 w-full h-full focus-visible:ring-4 focus-visible:ring-indigo-500 outline-none"
+              tabIndex={0}
+              aria-label="Knowledge Graph Visualization"
             >
               <ForceGraph2D
                 ref={graphRef}
