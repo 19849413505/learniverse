@@ -9,8 +9,14 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Rating, State } from 'ts-fsrs';
 import Link from 'next/link';
-import Confetti from 'react-confetti';
-import SocraticTutor from '@/components/chat/SocraticTutor';
+import dynamic from 'next/dynamic';
+
+// ⚡ Bolt: Dynamically import heavy, conditionally rendered components
+// Confetti and SocraticTutor are large dependencies that are only needed
+// when a user finishes a session or clicks "Ask Tutor".
+// Lazy loading these reduces the initial Time-To-Interactive (TTI) and JS payload size.
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
+const SocraticTutor = dynamic(() => import('@/components/chat/SocraticTutor'), { ssr: false });
 
 export default function StudyPage() {
   // ⚡ Bolt: Use `useShallow` for Zustand stores to prevent full-store re-renders.

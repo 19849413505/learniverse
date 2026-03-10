@@ -9,3 +9,7 @@
 ## 2026-03-10 - [Zustand Store React Re-render Bottleneck]
 **Learning:** Destructuring directly from the `useStore()` hook (e.g., `const { a, b } = useUserStore()`) subscribes the component to the ENTIRE store. In complex pages with frequent updates (like `StudyPage` where `xp` and `streak` update often, or `lastActiveDate` updates silently in the background), this causes major, unnecessary component-wide re-renders.
 **Action:** Always use `zustand/react/shallow` (`useShallow`) when extracting multiple properties from a Zustand store, like this: `useUserStore(useShallow(state => ({ a: state.a })))`. If only extracting one property, use an atomic selector: `useUserStore(state => state.a)`.
+
+## 2026-03-10 - [Initial Payload Bloat via Hidden Components]
+**Learning:** Found an anti-pattern where heavy, conditionally rendered components (like `react-confetti` or the `SocraticTutor` chat modal) were statically imported in `StudyPage`. This forced the user to download and parse large chunks of JS required for features they might never even open or reach.
+**Action:** Use Next.js Code Splitting (`next/dynamic`) to dynamically import these components (e.g., `const Confetti = dynamic(() => import('react-confetti'), { ssr: false });`). This keeps the initial page payload thin and defers the network request for the heavy component until it is actually needed.
