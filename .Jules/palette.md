@@ -7,3 +7,6 @@
 ## 2024-03-10 - Animating Primary Action Calls
 **Learning:** Adding subtle breathing animations (`y: [0, -8, 0]`) to floating action buttons (like "Ask Tutor") effectively draws the user's eye without being obtrusive. Pairing this with `Enter` key support for primary form/step progression reduces friction. However, extreme care must be taken in React to avoid violating hook rules when adding these listeners.
 **Action:** When adding global event listeners via `useEffect`, ensure they are placed *above* any early returns that wait for data loading.
+## 2024-03-10 - Global Layout Fluidity & Gamification A11y
+**Learning:** Hard-coded gamification stats (like XP, Streak) without native `title` attributes or `tabIndex={0}` are invisible to screen readers and confusing to new users. Furthermore, instantly snapping active states in global navigation bars feels rigid.
+**Action:** Always wrap visual gamification badges with proper `aria-label`, `title`, and `focus-visible` outlines. When dealing with global layout components like sidebars, prefer using Framer Motion`'`s `layoutId` to create a continuous, fluid spatial context when switching tabs.
