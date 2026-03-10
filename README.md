@@ -89,12 +89,13 @@ Now, open your browser and access `http://localhost:3000` to experience it!
 
 ---
 
-## 🖥️ Build Standalone Windows Desktop App
 
-You can use the **Electron** encapsulation to one-click package this Web application into a browserless, native `.exe` desktop program for users to download.
+## 🖥️ Build Standalone Desktop App
 
-1. **Install global packaging dependencies (Optional):**
-   Ensure `electron-builder` is installed in your environment.
+You can use the **Electron** encapsulation to one-click package this Web application into a browserless, native desktop program (Windows, macOS, Linux) for users to download.
 
-2. **Run the build script in the `packages/desktop` directory** (or execute it directly on your local machine according to the scripts in the repository).
-   Due to platform security restrictions, we will use Electron in the local environment to generate `dist/Learniverse Setup.exe`.
+👉 **[View the detailed Learniverse Desktop Packaging Guide](docs/desktop-packaging.md)**
+
+1. **Run the automated build script** from the root directory: `npm run build:desktop`.
+2. This command will automatically build the monorepo and run 
+3. electron-builder` to generate the desktop app in the `packages/desktop/dist/` directory.
