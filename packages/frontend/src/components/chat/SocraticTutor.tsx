@@ -139,21 +139,33 @@ export default function SocraticTutor({ isOpen, onClose, contextTitle, contextBo
 
           {/* Persona Selector */}
           <div className="p-3 border-b border-slate-100 flex gap-2 overflow-x-auto whitespace-nowrap bg-white scrollbar-hide">
-            {PERSONAS.map(p => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  setSelectedPersona(p);
-                  setMessages([{ role: 'assistant', content: `切换导师成功。我是${p.name}，让我们继续探讨【${contextTitle}】。` }]);
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                  selectedPersona.id === p.id ? p.color : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <span>{p.avatar}</span>
-                {p.name}
-              </button>
-            ))}
+            {PERSONAS.map(p => {
+              const isSelected = selectedPersona.id === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setSelectedPersona(p);
+                    setMessages([{ role: 'assistant', content: `切换导师成功。我是${p.name}，让我们继续探讨【${contextTitle}】。` }]);
+                  }}
+                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none ${
+                    isSelected ? p.color : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                  aria-pressed={isSelected}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activePersonaIndicator"
+                      className="absolute inset-0 border-2 rounded-full pointer-events-none"
+                      style={{ borderColor: 'currentColor', opacity: 0.3 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                  <span>{p.avatar}</span>
+                  {p.name}
+                </button>
+              );
+            })}
           </div>
 
           {/* Chat Messages */}
@@ -212,7 +224,9 @@ export default function SocraticTutor({ isOpen, onClose, contextTitle, contextBo
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title={isLoading ? "导师正在思考中..." : !input.trim() ? "请输入内容后发送" : "发送消息"}
+                className="bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                aria-label="发送消息"
               >
                 <Send className="w-4 h-4" />
               </button>

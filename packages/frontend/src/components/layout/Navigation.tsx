@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Map, Trophy, Network, User, Settings } from 'lucide-react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 
 const navItems = [
   { name: 'Learn', href: '/', icon: Map },
@@ -35,14 +36,25 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors duration-200',
+                'relative flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none',
                 isActive
-                  ? 'bg-indigo-50 text-indigo-600'
+                  ? 'text-indigo-600'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <item.icon className={clsx('w-6 h-6', isActive ? 'text-indigo-600' : 'text-gray-400')} />
-              {item.name}
+              {isActive && (
+                <motion.div
+                  layoutId="sidebarActiveIndicator"
+                  className="absolute inset-0 bg-indigo-50 rounded-xl"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              <div className="relative z-10 flex items-center gap-3">
+                <item.icon className={clsx('w-6 h-6 transition-colors', isActive ? 'text-indigo-600' : 'text-gray-400')} />
+                {item.name}
+              </div>
             </Link>
           );
         })}
@@ -66,7 +78,7 @@ export function BottomNav() {
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white pb-safe pt-1 z-50">
-      <div className="flex justify-around items-center h-16">
+      <div className="flex justify-around items-center h-16 relative">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -74,12 +86,21 @@ export function BottomNav() {
               key={item.name}
               href={item.href}
               className={clsx(
-                'flex flex-col items-center justify-center w-full h-full space-y-1',
+                'relative flex flex-col items-center justify-center w-full h-full space-y-1 focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none z-10',
                 isActive ? 'text-indigo-600' : 'text-gray-500'
               )}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <item.icon className={clsx('w-6 h-6', isActive ? 'text-indigo-600' : 'text-gray-400')} />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              <item.icon className={clsx('w-6 h-6 relative z-10 transition-colors', isActive ? 'text-indigo-600' : 'text-gray-400')} />
+              <span className="text-[10px] font-medium relative z-10">{item.name}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="bottomNavActiveIndicator"
+                  className="absolute -top-1 w-10 h-1 bg-indigo-600 rounded-b-full"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
             </Link>
           );
         })}
