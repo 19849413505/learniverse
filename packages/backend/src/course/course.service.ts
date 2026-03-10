@@ -186,12 +186,16 @@ export class CourseService {
 
      const nodesToComplete = new Set<string>();
 
+     // ⚡ Bolt: Create O(1) lookup map to prevent O(N^2) recursive traversal
+     // Converts findPrereqs operation from O(N^2) to O(N)
+     const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+
      // Recursive function to find all prerequisites
      const findPrereqs = (nodeId: string) => {
         if (nodesToComplete.has(nodeId)) return;
         nodesToComplete.add(nodeId);
 
-        const node = allNodes.find(n => n.id === nodeId);
+        const node = nodeMap.get(nodeId);
         if (node) {
            for (const prereq of node.prerequisites) {
               findPrereqs(prereq.sourceId);
