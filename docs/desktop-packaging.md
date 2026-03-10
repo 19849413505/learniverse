@@ -10,9 +10,16 @@ Before packaging, ensure you have the following installed:
 
 Since Learniverse uses a monorepo structure, the desktop application depends on the successful build of both the frontend (Next.js) and the backend (NestJS).
 
-## One-Click Automated Build
+## One-Click Build for Windows
 
-To simplify the process, an automated script has been added to the root `package.json`. It will compile all necessary workspaces and package the desktop client for your current operating system.
+For Windows users who want a hassle-free experience, a `build-desktop.bat` file is provided in the project root directory.
+
+**Simply double-click `build-desktop.bat`**.
+It will automatically run `npm install` (resolving any "command not found" errors like `tsc` or `next`) and then package the application. Your installer will be ready in `packages/desktop/dist/`.
+
+## Command Line Automated Build (Cross-platform)
+
+If you prefer using the terminal or are on macOS/Linux, make sure you have installed all dependencies first (`npm install`).
 
 Run the following command from the **root directory**:
 

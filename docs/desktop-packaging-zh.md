@@ -10,11 +10,20 @@
 
 由于 Learniverse 采用 monorepo 结构，桌面端应用依赖于前端 (Next.js) 和后端 (NestJS) 的成功构建。
 
-## 一键自动打包脚本
+## 针对 Windows 用户的终极一键打包工具
 
-为了简化操作，我们在项目根目录的 `package.json` 中添加了自动化脚本。该脚本会自动编译所有必需的工作区（workspaces），并针对当前操作系统打包桌面端客户端。
+如果你不想手动输入命令行，我们在项目根目录为您准备了一个 Windows 批处理文件：`build-desktop.bat`。
 
-请在 **项目根目录** 下运行以下命令：
+**只需双击运行 `build-desktop.bat`**：
+1. 它将自动帮你下载安装所有依赖（`npm install`，解决提示找不到 `tsc`、`next` 等工具的错误）。
+2. 安装完毕后自动构建全栈并打包你的 Windows 桌面应用。
+3. 你的最终安装包将会出现在 `packages/desktop/dist/` 文件夹中。
+
+## 命令行自动打包脚本（全平台适用）
+
+为了简化操作，如果您更喜欢使用终端命令行，我们在项目根目录的 `package.json` 中添加了跨平台自动化脚本。
+
+在确保已经安装依赖（运行 `npm install`）之后，在 **项目根目录** 下运行以下命令：
 
 ```bash
 npm run build:desktop
