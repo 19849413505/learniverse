@@ -89,12 +89,10 @@ npm run dev &
 
 ---
 
-
 ## 🖥️ スタンドアロンのデスクトップアプリのビルド
 
 **Electron**のパッケージングにより、このWebアプリケーションをブラウザ不要のネイティブなクロスプラットフォーム (Windows, macOS, Linux) デスクトッププログラムとしてユーザーに提供することができます。
 
 👉 **[Learniverse デスクトップパッケージングガイドの詳細を見る (英語)](docs/desktop-packaging.md)**
-
 1. **ルートディレクトリから自動ビルドスクリプトを実行します:** `npm run build:desktop`。
 2. このコマンドは自動的にプロジェクト全体をビルドし、`electron-builder` を実行して `packages/desktop/dist/` ディレクトリにデスクトップアプリを生成します。

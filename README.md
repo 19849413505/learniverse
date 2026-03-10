@@ -89,7 +89,6 @@ Now, open your browser and access `http://localhost:3000` to experience it!
 
 ---
 
-
 ## 🖥️ Build Standalone Desktop App
 
 You can use the **Electron** encapsulation to one-click package this Web application into a browserless, native desktop program (Windows, macOS, Linux) for users to download.

@@ -1,4 +1,6 @@
-@echo off
+import sys
+
+content = """@echo off
 color 0A
 
 echo =======================================================
@@ -44,8 +46,12 @@ echo =======================================================
 color 0A
 echo [SUCCESS] Desktop application packaged successfully!
 echo [成功] 桌面应用打包完成！
-echo Your installer is located in: packages\desktop\dist\
-echo 您的安装包已存放在: packages\desktop\dist\ 目录下。
+echo Your installer is located in: packages\\desktop\\dist\\
+echo 您的安装包已存放在: packages\\desktop\\dist\\ 目录下。
 echo =======================================================
 echo.
 pause
+"""
+
+with open('build-desktop.bat', 'wb') as f:
+    f.write(content.encode('utf-8'))
