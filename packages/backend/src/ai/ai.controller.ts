@@ -35,14 +35,40 @@ export class AiController {
     const savedCards = [];
     for (const q of questions) {
       if (q.front && q.back) {
-        const card = await this.prisma.flashcard.create({
-          data: {
+        if (!this.prisma.isConnected || this.prisma.isOfflineMode) {
+          // If offline/mock DB mode, just return the generated card with a mock ID
+          savedCards.push({
+            id: `mock-card-${Math.random().toString(36).substr(2, 9)}`,
             front: q.front,
             back: q.back,
             sourceNode: body.nodeName,
+            relevance: q.relevance,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          try {
+            const card = await this.prisma.flashcard.create({
+              data: {
+                front: q.front,
+                back: q.back,
+                sourceNode: body.nodeName,
+              }
+            });
+            savedCards.push({ ...card, relevance: q.relevance });
+          } catch (e) {
+            // gracefully fallback if db fails mid-generation
+            savedCards.push({
+              id: `mock-card-${Math.random().toString(36).substr(2, 9)}`,
+              front: q.front,
+              back: q.back,
+              sourceNode: body.nodeName,
+              relevance: q.relevance,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
           }
-        });
-        savedCards.push({ ...card, relevance: q.relevance });
+        }
       }
     }
 

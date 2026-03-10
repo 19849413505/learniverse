@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Sparkles, FileText, CheckCircle, Database, Network, Loader2, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -35,6 +35,24 @@ export default function KnowledgeBasePage() {
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
 
   const graphRef = useRef<any>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+
+  const memoizedGraphData = useMemo(() => graphData, [graphData]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Mock Graph Data Generation
   const generateMockData = () => {
@@ -293,7 +311,10 @@ export default function KnowledgeBasePage() {
         </div>
 
         {/* Processing/Visualization Area */}
-        <div className="bg-gray-900 p-6 rounded-3xl shadow-xl flex flex-col h-[600px] relative overflow-hidden">
+        <div
+          ref={containerRef}
+          className="bg-gray-900 p-6 rounded-3xl shadow-xl flex flex-col h-[600px] relative overflow-hidden"
+        >
 
           <AnimatePresence>
             {!isProcessing && !showGraph && (
@@ -344,14 +365,14 @@ export default function KnowledgeBasePage() {
             >
               <ForceGraph2D
                 ref={graphRef}
-                graphData={graphData}
+                graphData={memoizedGraphData}
                 nodeAutoColorBy="group"
                 nodeRelSize={8}
                 linkColor={() => 'rgba(255,255,255,0.2)'}
                 linkWidth={2}
                 backgroundColor="#111827"
-                width={800} // Ideally resize-aware, hardcoded for MVP constraints
-                height={500}
+                width={dimensions.width}
+                height={dimensions.height}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {
                   const label = node.name;
                   const fontSize = 12/globalScale;

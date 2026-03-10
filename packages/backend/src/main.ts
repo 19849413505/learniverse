@@ -15,6 +15,10 @@ async function bootstrap() {
   // Enable global validation
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
+  // Global Exception Filters
+  const { PrismaExceptionFilter } = await import('./prisma/prisma-exception.filter');
+  app.useGlobalFilters(new PrismaExceptionFilter());
+
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Learniverse API')
