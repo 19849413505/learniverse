@@ -13,7 +13,7 @@ export class CourseController {
 
   @Post('generate-tree')
   async generateCourseTree(
-    @Body() body: { text: string; deckId: string; customConfig?: any }
+    @Body() body: { text: string; deckId: string; customConfig?: any; tutorPrompt?: string }
   ) {
     if (!body.text || !body.deckId) {
       return { error: 'text and deckId are required' };
@@ -21,7 +21,8 @@ export class CourseController {
 
     // 1. Generate structured graph with MicroLessons via AI
     const graphOutput = await this.aiService.getCourseBuilderAgent(body.customConfig).process({
-      text: body.text
+      text: body.text,
+      tutorPrompt: body.tutorPrompt
     });
 
     // 2. Save the structure to PostgreSQL
