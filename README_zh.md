@@ -88,7 +88,6 @@ npm run dev &
 现在，打开浏览器访问 `http://localhost:3000` 即可体验！
 
 ---
-
 ## 🖥️ 构建独立的桌面端应用
 
 你可以通过基于 **Electron** 封装，将此 Web 应用一键打包为无需浏览器的、跨平台 (Windows, macOS, Linux) 桌面程序供用户下载。
