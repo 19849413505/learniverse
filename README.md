@@ -1,85 +1,100 @@
+[🇺🇸 English](README.md) | [🇨🇳 中文](README_zh.md) | [🇷🇺 Русский](README_ru.md) | [🇯🇵 日本語](README_ja.md)
+
 # 🌌 Learniverse (Promax)
 
-**Learniverse** 旨在打造下一代自适应、游戏化、社区驱动的终极学习平台。它不仅仅是一个背单词的工具，而是一个集成了**知识图谱引擎、大语言模型自动生成、开源 FSRS 间隔重复算法，以及多邻国式游戏化体验**的教育基础设施。
+**Learniverse** aims to build the **ultimate next-generation adaptive, gamified, open-source learning platform**. It's not just a vocabulary memorization tool, but an educational infrastructure integrating a **knowledge graph engine, LLM automated parsing, the open-source FSRS spaced repetition algorithm, and a Duolingo-style immersive gamified experience**.
 
-我们的愿景是成为类似 **Math Academy 的 Promax 版**：不仅覆盖数学，更能让任何一本教材、任何一篇文档通过 AI 的解析，转化为细颗粒度的知识网络，并以最符合人类认知规律的方式（间隔重复 + 苏格拉底式启发教学）让学习者达到真正的“精熟”状态（Mastery）。
-
----
-
-## 🎯 核心目标与优势 (The Vision & Edge)
-
-### 1. 自动化的知识萃取 (NotebookLM 体验)
-用户只需上传书籍（PDF/EPUB）或粘贴长文本，**知识工坊 (Knowledge Forge)** 模块会自动：
-- 提取出文档中的核心概念（节点）与依赖关系（边）。
-- 生成**可视化的 2D/3D 知识图谱**，让你在学习前就能鸟瞰整片“知识森林”。
-- 自动为每个概念生成用于复习的闪卡（Flashcards）。
-
-### 2. 极致高效的记忆引擎 (FSRS 算法)
-告别凭直觉复习。我们引入了目前世界上最先进的开源间隔重复算法 **FSRS (Free Spaced Repetition Scheduler)**。
-- 采用 `ts-fsrs` 库，根据你每次点击“忘记/困难/正常/简单”的操作，动态构建属于你的**个性化遗忘曲线**。
-- 精确计算下一次复习时间（Due Date）和记忆稳定性（Stability），只在你要遗忘的边缘让你复习，最大限度节省时间。
-
-### 3. 多邻国式的沉浸感与游戏化 (Gamification)
-学习本身是反人性的，所以我们用游戏机制来对冲它：
-- **学习路径 (Skill Tree)**：将知识点像解锁游戏技能树一样串联起来。
-- **连胜与经验值 (Streak & XP)**：每次复习都能积累 XP，通过持续打卡保持火热的连胜记录。
-- **排行榜与社交联赛 (Leagues)**：引入青铜/白银/黄金联赛机制，与朋友或全球学习者竞技。
-- **好友共同任务 (Co-op Quests)**：组队完成目标，打破孤岛式学习。
-
-### 4. 走向 Promax：阿基米德对话式教学 (Socratic AI)
-在传统的“看问题 -> 对答案”的被动闪卡模式之上，我们将融入**苏格拉底式的 AI 启发教学**。当你遇到困难卡片时，AI 不会直接把答案塞给你，而是像一位耐心的导师，通过循循善诱的追问，引导你自己推导出答案，从而实现真正的深度理解。
+Our vision is to become the **open-source Promax version of Math Academy**: empowering everyone with the ability to transform any book or document into a fine-grained knowledge network. Through AI Socratic heuristic teaching and scientific spaced repetition, we help learners achieve true "Mastery".
 
 ---
 
-## 🚀 项目现状 (MVP)
+## 🎯 The Vision & Edge
 
-目前，本项目已经完成了**前端 MVP 版本**的构建（采用 Next.js 14 App Router + Tailwind CSS + Framer Motion）：
-- 完整的 Dashboard 仪表盘（包含多邻国式学习路径、基于 Recharts 的遗忘曲线可视化）。
-- 集成了 `react-force-graph-2d` 的文档导入与图谱生成模拟。
-- 集成了 `ts-fsrs` 的核心复习循环（卡片翻转、评分、自动计算下一次复习时间）。
-- 数据目前由 `Zustand` 状态管理并持久化至浏览器的 `localStorage` 中。
+### 1. Automated Knowledge Extraction (NotebookLM Experience)
+Users simply upload books (PDF/EPUB) or paste long texts, and the **Knowledge Forge** module automatically:
+- Extracts core concepts (nodes) and dependencies (edges) from the document.
+- Generates **visual 2D/3D knowledge graphs**, allowing you to get a bird's-eye view of the "knowledge forest" before learning.
+- Automatically generates Flashcards for review for each concept.
+
+### 2. Ultimate Efficient Memory Engine (FSRS Algorithm)
+Say goodbye to intuitive reviewing. We introduce the world's most advanced open-source spaced repetition algorithm, **FSRS (Free Spaced Repetition Scheduler)**.
+- Uses the `ts-fsrs` library to dynamically construct your **personalized forgetting curve** based on every "Forgot/Hard/Good/Easy" click.
+- Accurately calculates the next Due Date and memory Stability, making you review only on the verge of forgetting, maximizing time savings.
+
+### 3. Duolingo-style Immersion and Gamification
+Learning itself is contrary to human nature, so we use game mechanics to hedge against it:
+- **Skill Tree**: Links knowledge points together like unlocking game skill trees.
+- **Streak & XP**: Accumulate XP with each review and maintain a hot streak through continuous check-ins.
+- **Leagues**: Introduces Bronze/Silver/Gold league mechanics to compete with friends or global learners.
+- **Co-op Quests**: Team up to complete goals and break isolated learning.
+
+### 4. Towards Promax: Archimedean Socratic AI
+On top of the traditional "look at question -> check answer" passive flashcard mode, we will integrate **Socratic AI heuristic teaching**. When you encounter a difficult card, AI won't just spoon-feed you the answer. Instead, like a patient mentor, it guides you to deduce the answer yourself through step-by-step questioning, achieving true deep understanding.
 
 ---
 
-## 🛠️ 技术栈 (Tech Stack)
+## ✨ Current Features
 
-| 模块 | 技术选型 |
+Built on a cutting-edge architecture, we have completed the core frontend MVP and partial backend integration, realizing the following features:
+
+- **Adaptive Knowledge Extraction**: Supports document parsing and importing, automatically generating visual 2D/3D knowledge graphs via AI.
+- **Open-source Algorithm Engine**: Fully integrates the open-source `ts-fsrs` (Free Spaced Repetition Scheduler) across platforms for accurate review time calculation.
+- **Gamified Dashboard**: Duolingo-style Skill Tree, learning progress tracking based on Recharts, forgetting curve visualization, alongside Streak & XP and achievement systems.
+- **Cross-platform Support**: Supports Web static export while providing independent Windows/Mac native desktop applications based on Electron.
+- **State and Cache Management**: Zustand data persistence and optimized React Flow knowledge tree rendering.
+
+---
+
+## 🔮 Future Roadmap
+
+We are committed to continuously expanding the platform's boundaries, making AI "understand" you better. Our core future evolutionary routes include:
+
+- **Deep Mastery Mechanics**: Introducing pre-diagnostic tests and knowledge graph dependency checks to achieve automated "interleaved practice" and "targeted remediation".
+- **Multi-Persona Emotional Tutors (Socrates-7 System)**: Introducing virtual tutors with different personalities (like March 7th, Keqing, etc.) to rebuild immersion through conversational interactions featuring emotional bonds and post-class simulated socialization.
+- **Personalized Learning Velocity**: Automatically modeling each student's "learning velocity" for every topic based on data feedback, achieving truly adaptive, individualized review intervals.
+- **Social League Expansion**: Adding dynamic virtual study groups and league ranking mechanisms, along with XP quality penalties and emotion-linked achievement systems.
+
+---
+
+## 🛠️ Tech Stack
+
+| Module | Tech Stack |
 |------|----------|
-| **核心框架** | Next.js 14, React 18, TypeScript |
-| **样式与动画**| Tailwind CSS, Framer Motion, lucide-react |
-| **状态管理** | Zustand (with Persist Middleware) |
-| **算法引擎** | ts-fsrs (Free Spaced Repetition Scheduler) |
-| **数据可视化**| Recharts (学习进度曲线), react-force-graph-2d (知识图谱) |
+| **Core Framework** | Next.js 14, React 18, TypeScript |
+| **Styling & Animation**| Tailwind CSS, Framer Motion, lucide-react |
+| **State Management** | Zustand (with Persist Middleware) |
+| **Algorithm Engine** | ts-fsrs (Free Spaced Repetition Scheduler) |
+| **Data Visualization**| Recharts (Learning curve), react-force-graph-2d (Knowledge graph) |
 
 ---
 
-## 💻 本地开发与启动
+## 💻 Local Development & Startup
 
-本项目采用 Monorepo 结构进行管理。
+This project is managed using a Monorepo structure.
 
 ```bash
-# 1. 克隆仓库
+# 1. Clone the repository
 git clone https://github.com/19849413505/learniverse.git
 cd learniverse
 
-# 2. 安装所有依赖包
+# 2. Install all dependencies
 npm install
 
-# 3. 启动前端开发服务器
+# 3. Start frontend development server
 cd packages/frontend
-npm run dev
+npm run dev &
 ```
 
-现在，打开浏览器访问 `http://localhost:3000` 即可体验！
+Now, open your browser and access `http://localhost:3000` to experience it!
 
 ---
 
-## 🖥️ 构建独立的 Windows 桌面端应用
+## 🖥️ Build Standalone Windows Desktop App
 
-你可以通过基于 **Electron** 封装，将此 Web 应用一键打包为无需浏览器的、原生的 `.exe` 桌面程序供用户下载。
+You can use the **Electron** encapsulation to one-click package this Web application into a browserless, native `.exe` desktop program for users to download.
 
-1. **安装全局打包依赖 (可选):**
-   确保你的环境中安装了 `electron-builder`。
+1. **Install global packaging dependencies (Optional):**
+   Ensure `electron-builder` is installed in your environment.
 
-2. **在 `packages/desktop` 目录下执行构建脚本** (或者直接在你的本地机器上按照仓库内脚本执行)。
-   由于平台安全限制，我们将使用 Electron 在本地环境中生成 `dist/Learniverse Setup.exe`。
+2. **Run the build script in the `packages/desktop` directory** (or execute it directly on your local machine according to the scripts in the repository).
+   Due to platform security restrictions, we will use Electron in the local environment to generate `dist/Learniverse Setup.exe`.
