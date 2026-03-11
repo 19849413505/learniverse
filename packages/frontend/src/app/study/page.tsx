@@ -336,7 +336,12 @@ export default function StudyPage() {
 }
 
 
-function RatingButton({ rating, label, sub, shortcut, color, onRate }: { rating: Rating, label: string, sub: string, shortcut?: string, color: string, onRate: (rating: Rating) => void }) {
+// ⚡ Bolt: Wrap RatingButton in React.memo to prevent unnecessary re-renders.
+// The parent StudyPage frequently re-renders (e.g., when the progress bar updates
+// or when showConfetti toggles). Since the props (rating, label, color, etc.) are static
+// and the `onRate` callback is already wrapped in `useCallback` in the parent,
+// memoization completely short-circuits the React reconciliation process for these 4 buttons.
+const RatingButton = React.memo(function RatingButton({ rating, label, sub, shortcut, color, onRate }: { rating: Rating, label: string, sub: string, shortcut?: string, color: string, onRate: (rating: Rating) => void }) {
   return (
     <button
       onClick={() => onRate(rating)}
@@ -352,4 +357,4 @@ function RatingButton({ rating, label, sub, shortcut, color, onRate }: { rating:
       )}
     </button>
   );
-}
+});
