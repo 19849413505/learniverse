@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export interface Persona {
   id: string;
@@ -56,7 +57,7 @@ export default function SocraticTutor({ isOpen, onClose, contextTitle, contextBo
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { provider, apiKey, baseURL } = useSettingsStore();
+  const { provider, apiKey, baseURL } = useSettingsStore(useShallow((state) => ({ provider: state.provider, apiKey: state.apiKey, baseURL: state.baseURL })));
   const apiEndpoint = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001/api';
 
   useEffect(() => {

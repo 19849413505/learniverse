@@ -4,9 +4,10 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { Settings, Server, Key, Bot, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function SettingsPage() {
-  const { provider, apiKey, baseURL, model, setSettings } = useSettingsStore();
+  const { provider, apiKey, baseURL, model, setSettings } = useSettingsStore(useShallow((state) => ({ provider: state.provider, apiKey: state.apiKey, baseURL: state.baseURL, model: state.model, setSettings: state.setSettings })));
 
   const [localProvider, setLocalProvider] = useState(provider);
   const [localApiKey, setLocalApiKey] = useState(apiKey);
